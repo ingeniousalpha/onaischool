@@ -6,11 +6,11 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from phonenumber_field.modelfields import PhoneNumberField
 
 from .managers import UserManager
-from apps.bookings.models import Booking
+
+from .. import Grades, Roles
 
 
 class User(PermissionsMixin, AbstractBaseUser):
-
     class Meta:
         verbose_name = _("Учетная запись")
         verbose_name_plural = _("Учетная запись")
@@ -20,18 +20,22 @@ class User(PermissionsMixin, AbstractBaseUser):
     full_name = models.CharField("Имя", max_length=256, null=True, blank=True)
     mobile_phone = PhoneNumberField("Моб. телефон", blank=True, null=True)
     secret_key = models.UUIDField("Секретный ключ", default=uuid_lib.uuid4, unique=True)
-    club = models.ForeignKey(
-        "clubs.Club",
-        null=True, blank=True,
-        on_delete=models.SET_NULL,
-        related_name="admins",
+    language = models.CharField()
+    parent = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='children',
+        verbose_name=_("Родитель")
     )
-
+    grade = models.CharField(max_length=3, choices=Grades.choices, default=Grades.FIRST, verbose_name="Класс")
+    role = models.CharField(max_length=50, choices=Roles.choices, default=Roles.STUDENT)
     is_active = models.BooleanField("Активный", default=True)
     is_staff = models.BooleanField("Сотрудник", default=False)
     is_email_confirmed = models.BooleanField("Почта подтверждена", default=False)
     is_mobile_phone_verified = models.BooleanField(default=False)
-
+    avatar_image = models.ImageField(null=True, blank=True)
     created_at = models.DateTimeField(_("Создан"), default=timezone.now)
     updated_at = models.DateTimeField(_("Обновлен"), auto_now=True)
 
@@ -41,19 +45,11 @@ class User(PermissionsMixin, AbstractBaseUser):
     def __str__(self):
         return str(self.mobile_phone or self.email)
 
-    @property
-    def has_bookings(self):
-        return Booking.objects.filter(club_user__user=self).exists()
-
     # @property
     # def username(self):
     #     if self.mobile_phone:
     #         return str(self.mobile_phone)
     #     return self.email
-
-    def set_current_card(self, card: 'PaymentCard'):
-        self.payment_cards.exclude(id=card.id).update(is_current=False)
-        self.payment_cards.filter(id=card.id).update(is_current=True)
 
     def has_perm(self, perm, obj=None):
         if not self.is_active:
@@ -90,26 +86,3 @@ class User(PermissionsMixin, AbstractBaseUser):
         if self.created_at + timezone.timedelta(days=1) > timezone.now():
             return True
         return self.is_active
-
-    def get_club_account(self, club_branch):
-        return self.club_accounts.filter(club_branch=club_branch).first()
-
-
-class UserOneVisionPayer(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="onevision_payers",
-        null=True, blank=True
-    )
-    trader = models.ForeignKey(
-        "clubs.ClubBranchLegalEntity",
-        null=True, blank=True,
-        on_delete=models.SET_NULL,
-        related_name="onevision_payers",
-    )
-    payer_id = models.CharField(
-        "ID юзера в платежной системе",
-        null=True, blank=True,
-        max_length=255
-    )

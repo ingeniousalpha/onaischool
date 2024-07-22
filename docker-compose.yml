@@ -63,36 +63,36 @@ services:
     networks:
       - onai-net
 
-  onai-beat:
-    container_name: onai-beat
-    restart: always
-    build:
-      context: .
-      dockerfile: Dockerfile
-    volumes:
-      - .:/onaischool
-    env_file:
-      - ./.env.dev
-    depends_on:
-      - onai-worker
-      - onai-server
-    networks:
-      - onai-net
-    command: "celery -A config.celery_app beat --loglevel=INFO"
-
-  onai-worker:
-    container_name: onai-worker
-    restart: always
-    build:
-      context: .
-      dockerfile: Dockerfile
-    volumes:
-      - .:/onaischool
-    env_file:
-      - ./.env.dev
-    networks:
-      - onai-net
-    command: "celery -A config.celery_app worker --loglevel=INFO"
+#  onai-beat:
+#    container_name: onai-beat
+#    restart: always
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    volumes:
+#      - .:/onaischool
+#    env_file:
+#      - ./.env.dev
+#    depends_on:
+#      - onai-worker
+#      - onai-server
+#    networks:
+#      - onai-net
+#    command: "celery -A config.celery_app beat --loglevel=INFO"
+#
+#  onai-worker:
+#    container_name: onai-worker
+#    restart: always
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    volumes:
+#      - .:/onaischool
+#    env_file:
+#      - ./.env.dev
+#    networks:
+#      - onai-net
+#    command: "celery -A config.celery_app worker --loglevel=INFO"
 
   onai-db:
     container_name: onai-db

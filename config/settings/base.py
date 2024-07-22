@@ -127,6 +127,7 @@ THIRD_PARTY_APPS = [
     "constance.backends.database",
     "django_celery_beat",
     "django_json_widget",
+    "localized_fields"
     # "ckeditor",
     # "ckeditor_uploader",
 ]
@@ -186,7 +187,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.server.wsgi.application'
+LOCALIZED_FIELDS_FALLBACKS = {
+    "ru": ["ru_RU", ]
+}
+from django.utils.translation import gettext_lazy as _
 
+LANGUAGES = [
+    ('ru', _('Russian')),
+    ('kk', _('Kazakh')),
+    ('en', _('English'))
+]
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
@@ -251,7 +261,6 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
@@ -295,7 +304,6 @@ REST_FRAMEWORK = {
     'DEFAULT_VERSION': '1.0'
 }
 
-
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=70),
@@ -309,7 +317,6 @@ SIMPLE_JWT = {
     "USER_ID_CLAIM": "user_id",
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 }
-
 
 CACHES = {
     "default": {
