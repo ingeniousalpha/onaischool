@@ -1,0 +1,149 @@
+version: '3.9'
+
+volumes:
+  media:
+  static:
+  onai-db_data:
+  onai-redis_data:
+  onai-portainer_data:
+
+networks:
+  onai-net:
+    driver: bridge
+
+services:
+  onai-server:
+    container_name: onai-server
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/onaischool
+      - media:/media
+    env_file:
+      - ./.env.dev
+    ports:
+      - "8008:8000"
+#    depends_on:
+#      - redis
+#      - postgres
+#      - celery-worker
+    networks:
+      - onai-net
+#    command: sh -c "python manage.py collectstatic --noinput --clear"
+
+#  onai-bot:
+#    container_name: gp-bot
+#    restart: always
+#    build:
+#      context: .
+#      dockerfile: Dockerfile.bot
+#    command: python apps/bot/launcher.py
+#    volumes:
+#      - .:/onaischool
+#    env_file:
+#      - ./.env.dev
+#    depends_on:
+#      - gp-postgres
+#    networks:
+#      - gp-net
+
+  onai-redis:
+    container_name: onai-redis
+    restart: unless-stopped
+    image: redis
+    command: redis-server --appendonly yes --replica-read-only no
+    ports:
+      - "6379:6379"
+    volumes:
+      - onai-redis_data:/data
+    env_file:
+      - ./.env.dev
+    networks:
+      - onai-net
+
+  onai-beat:
+    container_name: onai-beat
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/onaischool
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - onai-worker
+      - onai-server
+    networks:
+      - onai-net
+    command: "celery -A config.celery_app beat --loglevel=INFO"
+
+  onai-worker:
+    container_name: onai-worker
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/onaischool
+    env_file:
+      - ./.env.dev
+    networks:
+      - onai-net
+    command: "celery -A config.celery_app worker --loglevel=INFO"
+
+  onai-db:
+    container_name: onai-db
+    restart: always
+    image: postgres
+    volumes:
+      - onai-db_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=onaidb
+      - POSTGRES_USER=onaidb
+      - POSTGRES_PASSWORD=onaidb
+    ports:
+      - "5432:5432"
+#    depends_on:
+#      - redis
+    networks:
+      - onai-net
+
+  onai-pgadmin:
+    container_name: onai-pgadmin
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@onai.com
+      PGADMIN_DEFAULT_PASSWORD: onaidb
+    ports:
+      - "5555:80"
+    networks:
+      - onai-net
+
+#  portainer-agent:
+#    container_name: portainer-agent
+#    restart: always
+#    image: portainer/agent
+#    environment:
+#      AGENT_PORT: 9001
+#      LOG_LEVEL: DEBUG
+#    volumes:
+#      - /var/run/docker.sock:/var/run/docker.sock
+#      - /var/lib/docker/volumes:/var/lib/docker/volumes
+#    networks:
+#      - gp-net
+
+  onai-portainer:
+    container_name: onai-portainer
+    image: portainer/portainer-ce:latest
+    environment:
+      - TZ=Asia/Almaty
+    ports:
+      - "9000:9000"
+    volumes:
+      - onai-portainer_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
