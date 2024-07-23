@@ -33,21 +33,6 @@ services:
       - onai-net
 #    command: sh -c "python manage.py collectstatic --noinput --clear"
 
-#  onai-bot:
-#    container_name: gp-bot
-#    restart: always
-#    build:
-#      context: .
-#      dockerfile: Dockerfile.bot
-#    command: python apps/bot/launcher.py
-#    volumes:
-#      - .:/onaischool
-#    env_file:
-#      - ./.env.dev
-#    depends_on:
-#      - gp-postgres
-#    networks:
-#      - gp-net
 
   onai-redis:
     container_name: onai-redis

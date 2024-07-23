@@ -1,17 +1,9 @@
-# from ckeditor_uploader.fields import RichTextUploadingField
-# from ckeditor_uploader.widgets import CKEditorUploadingWidget
-from django import forms
-from django.urls import reverse
 from django.contrib import admin
-from django.utils.safestring import mark_safe
-from django.utils.translation import gettext_lazy as _
-from django.contrib.contenttypes.admin import GenericTabularInline, GenericStackedInline
 
-from apps.clubs.admin import ClubBranchInline
-from apps.common.models import HandledException, Document, AppVersion, City, Country
+from apps.common.models import HandledException
 
-admin.site.site_header = "Gamer Pro Project"
-admin.site.site_title = "Gamer Pro Project"
+admin.site.site_header = "Onai school"
+admin.site.site_title = "Onai school"
 admin.site.index_title = ""
 
 
@@ -59,54 +51,3 @@ class HandledExceptionAdmin(admin.ModelAdmin):
     search_fields = ('id', 'code')
     readonly_fields = ('created_at', 'id')
     date_hierarchy = 'created_at'
-
-
-@admin.register(Document)
-class DocumentAdmin(admin.ModelAdmin):
-    fields = (
-        'name',
-        'code',
-        'file'
-    )
-    list_display = (
-        'id',
-        'name',
-        'code'
-    )
-
-
-@admin.register(AppVersion)
-class AppVersionAdmin(admin.ModelAdmin):
-    list_display = (
-        'number', 'app', 'platform', 'updated_at',
-    )
-    list_filter = (
-        'app',
-        'platform',
-    )
-    fields = (
-        'updated_at', 'app', 'platform', 'number',
-    )
-    readonly_fields = ('updated_at',)
-
-
-class CityInline(admin.StackedInline):
-    model = City
-    fields = ('name', 'is_active')
-    extra = 0
-
-
-@admin.register(City)
-class CityAdmin(admin.ModelAdmin):
-    list_display = ('name', 'is_active')
-    list_editable = ('is_active',)
-
-    inlines = [ClubBranchInline]
-
-
-@admin.register(Country)
-class CountryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'is_active')
-    list_editable = ('is_active',)
-
-    inlines = [CityInline]

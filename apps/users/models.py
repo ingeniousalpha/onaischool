@@ -1,10 +1,11 @@
 import uuid as uuid_lib
 from django.db import models
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _  # noqa
+from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from phonenumber_field.modelfields import PhoneNumberField
 
+from config.settings import Languages
 from .managers import UserManager
 
 from .. import Grades, Roles
@@ -20,7 +21,7 @@ class User(PermissionsMixin, AbstractBaseUser):
     full_name = models.CharField("Имя", max_length=256, null=True, blank=True)
     mobile_phone = PhoneNumberField("Моб. телефон", blank=True, null=True)
     secret_key = models.UUIDField("Секретный ключ", default=uuid_lib.uuid4, unique=True)
-    language = models.CharField()
+    language = models.CharField(max_length=20, choices=Languages.choices, default=Languages.KAZAKH, verbose_name="Язык")
     parent = models.ForeignKey(
         'self',
         on_delete=models.CASCADE,

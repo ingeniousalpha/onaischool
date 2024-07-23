@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _  # noqa
 from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from localized_fields.fields import LocalizedCharField, LocalizedTextField, LocalizedFileField
 
 from .managers import MainManager
 from .utils import OverwriteStorage
@@ -67,3 +68,80 @@ class HandledException(TimestampModel):
     code = models.TextField("Код ошибки", max_length=512)
     message = models.TextField("Описание ошибки", max_length=512)
     stack_trace = models.TextField("Traceback", null=True, blank=True)
+
+
+class PriorityModel(MainModel):
+    priority = models.PositiveIntegerField(
+        db_index=True,
+        default=0,
+        verbose_name="Приоритет"
+    )
+
+    class Meta:
+        abstract = True
+        ordering = ('-priority',)
+
+
+class AbstractNameModel(MainModel):
+    name = LocalizedCharField(
+        verbose_name=_("Название"),
+        null=True,
+        blank=True,
+        required=True
+    )
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        if self.name is not None:
+            return str(self.name)
+        return "Не задано"
+
+
+class AbstractRequiredNameModel(MainModel):
+    name = LocalizedCharField(
+        verbose_name=_("Название"),
+        null=True,
+        required=True
+    )
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        if self.name is not None:
+            return str(self.name)
+        return "Не задано"
+
+
+class AbstractRequiredDescriptionModel(MainModel):
+    description = LocalizedTextField(
+        verbose_name=_("Описание"),
+        null=True,
+        required=True
+    )
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        if self.description is not None:
+            return str(self.description)
+        return "Не задано"
+
+
+class AbstractDescriptionModel(MainModel):
+    description = LocalizedTextField(
+        verbose_name=_("Описание"),
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        if self.description is not None:
+            return str(self.description)
+        return "Не задано"

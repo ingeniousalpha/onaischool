@@ -146,10 +146,7 @@ LOCAL_APPS = [
     'apps.common.apps.CommonConfig',
     'apps.users.apps.UsersConfig',
     'apps.integrations.apps.IntegrationsConfig',
-    'apps.clubs.apps.ClubsConfig',
-    'apps.bookings.apps.BookingsConfig',
-    'apps.notifications.apps.NotificationsConfig',
-    'apps.payments.apps.PaymentsConfig',
+    'apps.content.apps.ContentConfig'
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -203,12 +200,11 @@ LANGUAGES = [
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        "NAME": os.getenv("DB_NAME", "gamerprodb"),
-        "USER": os.getenv("DB_USER", "gamerprodb"),
-        "PASSWORD": os.getenv("DB_PASSWORD", "gamerprodb"),
-        "HOST": os.getenv("DB_HOST", "gp-postgres"),
-        # "HOST": "localhost",
+        'ENGINE': 'psqlextra.backend',
+        "NAME": os.getenv("DB_NAME", "onaidb"),
+        "USER": os.getenv("DB_USER", "onaidb"),
+        "PASSWORD": os.getenv("DB_PASSWORD", "onaidb"),
+        "HOST": os.getenv("DB_HOST", "onai-db"),
         "PORT": os.getenv("DB_PORT", "5432"),
     }
 }
@@ -255,11 +251,11 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
 LANGUAGE_CODE = 'ru'
-TIME_ZONE = "Asia/Almaty"
+TIME_ZONE = "Asia/Qyzylorda"
 
 USE_I18N = True
 USE_L10N = True
-USE_TZ = True
+USE_TZ = False
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
