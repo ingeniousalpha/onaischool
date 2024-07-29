@@ -3,11 +3,12 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (
     CatalogView,
-    CourseView
+    CourseView,
+    TopicView
 )
 
 urlpatterns = [
-
+    path('topic/<int:pk>', TopicView.as_view())
 ]
 
 router = DefaultRouter()

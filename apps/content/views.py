@@ -1,9 +1,10 @@
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from apps.common.mixins import PrivateSONRendererMixin
-from apps.content.models import Direction, Course
-from apps.content.serializers import DirectionSerializer, DirectionRetriveSerializer, CourseSerializer
+from apps.content.models import Direction, Course, Topic
+from apps.content.serializers import DirectionSerializer, DirectionRetrieveSerializer, CourseSerializer, \
+    TopicSerializer, TopicRetrieveSerializer
 
 
 class CatalogView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
@@ -12,7 +13,7 @@ class CatalogView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
 
     def get_serializer_class(self):
         if self.action == "retrieve":
-            return DirectionRetriveSerializer
+            return DirectionRetrieveSerializer
         return DirectionSerializer
 
 
@@ -24,3 +25,8 @@ class CourseView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
         if self.action == "retrieve":
             return CourseSerializer
         return CourseSerializer
+
+
+class TopicView(PrivateSONRendererMixin, RetrieveAPIView):
+    queryset = Topic.objects.all()
+    serializer_class = TopicRetrieveSerializer

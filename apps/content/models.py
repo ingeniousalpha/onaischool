@@ -53,16 +53,22 @@ class Course(PriorityModel, AbstractRequiredNameModel):
         verbose_name_plural = _("Курсы")
         ordering = ['priority']
 
+    def __str__(self):
+        return f"{self.grade}кл {self.subject}"
+
 
 class Chapter(PriorityModel, AbstractRequiredNameModel):
     quarter = models.CharField(max_length=10, choices=Quarter.choices, default=Quarter.FIRST, verbose_name="Четверть")
     course = models.ForeignKey(Course, verbose_name="Курс",
-                               on_delete=models.SET_NULL, null=True, blank=True)
+                               on_delete=models.SET_NULL, null=True, blank=True, related_name="chapters")
 
     class Meta:
         verbose_name = _("Раздел")
         verbose_name_plural = _("Разделы")
         ordering = ['priority']
+
+    def __str__(self):
+        return f"{self.name.ru} {self.quarter} четверть {self.course}"
 
 
 class Topic(PriorityModel, AbstractRequiredNameModel, AbstractDescriptionModel):
@@ -78,7 +84,7 @@ class Topic(PriorityModel, AbstractRequiredNameModel, AbstractDescriptionModel):
         blank=True,
     )
     chapter = models.ForeignKey(Chapter, verbose_name="Раздел",
-                                on_delete=models.SET_NULL, null=True, blank=True)
+                                on_delete=models.SET_NULL, null=True, blank=True, related_name="topics")
 
     class Meta:
         verbose_name = _("Тема")
