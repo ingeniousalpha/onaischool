@@ -13,6 +13,7 @@ class School(PriorityModel, AbstractRequiredNameModel):
     class Meta:
         verbose_name = _("Школа")
         verbose_name_plural = _("Школы")
+        ordering = ['priority']
 
 
 class Direction(PriorityModel, AbstractRequiredNameModel, AbstractRequiredDescriptionModel):
@@ -26,25 +27,31 @@ class Direction(PriorityModel, AbstractRequiredNameModel, AbstractRequiredDescri
     class Meta:
         verbose_name = _("Direction")
         verbose_name_plural = _("Directions")
+        ordering = ['priority']
 
 
 class Subject(PriorityModel, AbstractRequiredNameModel):
     direction = models.ForeignKey(Direction, verbose_name="Направление",
-                                  on_delete=models.SET_NULL, null=True, blank=True)
+                                  on_delete=models.SET_NULL, null=True, blank=True, related_name="subjects")
 
     class Meta:
         verbose_name = _("Предмет")
         verbose_name_plural = _("Предметы")
+        ordering = ['priority']
+
+    def __str__(self):
+        return f'{self.direction.name.ru} {self.name.ru}'
 
 
 class Course(PriorityModel, AbstractRequiredNameModel):
     grade = models.CharField(max_length=3, choices=Grades.choices, default=Grades.FIRST, verbose_name="Класс")
     subject = models.ForeignKey(Subject, verbose_name="Предмет",
-                                on_delete=models.SET_NULL, null=True, blank=True)
+                                on_delete=models.SET_NULL, null=True, blank=True, related_name='courses')
 
     class Meta:
         verbose_name = _("Курс")
         verbose_name_plural = _("Курсы")
+        ordering = ['priority']
 
 
 class Chapter(PriorityModel, AbstractRequiredNameModel):
@@ -55,6 +62,7 @@ class Chapter(PriorityModel, AbstractRequiredNameModel):
     class Meta:
         verbose_name = _("Раздел")
         verbose_name_plural = _("Разделы")
+        ordering = ['priority']
 
 
 class Topic(PriorityModel, AbstractRequiredNameModel, AbstractDescriptionModel):
@@ -75,3 +83,4 @@ class Topic(PriorityModel, AbstractRequiredNameModel, AbstractDescriptionModel):
     class Meta:
         verbose_name = _("Тема")
         verbose_name_plural = _("Темы")
+        ordering = ['priority']

@@ -127,6 +127,7 @@ THIRD_PARTY_APPS = [
     "constance.backends.database",
     "django_celery_beat",
     "django_json_widget",
+    "django.contrib.postgres",
     "localized_fields"
     # "ckeditor",
     # "ckeditor_uploader",
@@ -159,6 +160,7 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'apps.common.middleware.LanguageHeaderMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',

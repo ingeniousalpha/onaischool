@@ -9,6 +9,7 @@ from config.settings import Languages
 from .managers import UserManager
 
 from .. import Grades, Roles
+from ..content.models import School
 
 
 class User(PermissionsMixin, AbstractBaseUser):
@@ -29,6 +30,14 @@ class User(PermissionsMixin, AbstractBaseUser):
         blank=True,
         related_name='children',
         verbose_name=_("Родитель")
+    )
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='students',
+        verbose_name=_("Школа")
     )
     grade = models.CharField(max_length=3, choices=Grades.choices, default=Grades.FIRST, verbose_name="Класс")
     role = models.CharField(max_length=50, choices=Roles.choices, default=Roles.STUDENT)

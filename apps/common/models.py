@@ -87,7 +87,6 @@ class AbstractNameModel(MainModel):
         verbose_name=_("Название"),
         null=True,
         blank=True,
-        required=True
     )
 
     class Meta:
@@ -103,7 +102,7 @@ class AbstractRequiredNameModel(MainModel):
     name = LocalizedCharField(
         verbose_name=_("Название"),
         null=True,
-        required=True
+        required=['ru']
     )
 
     class Meta:
@@ -119,7 +118,7 @@ class AbstractRequiredDescriptionModel(MainModel):
     description = LocalizedTextField(
         verbose_name=_("Описание"),
         null=True,
-        required=True
+        required=['ru']
     )
 
     class Meta:

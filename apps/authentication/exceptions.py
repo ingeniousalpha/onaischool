@@ -5,13 +5,20 @@ from config.constants.error_codes import (
     INVALID_OTP,
     USER_ALREADY_HAS_ACTIVE_BOOKING,
     NOT_APPROVED_USER_CAN_NOT_BOOK_SEVERAL_COMPUTERS,
-    NOT_SUFFICIENT_CASHBACK_AMOUNT
+    NOT_SUFFICIENT_CASHBACK_AMOUNT,
+    SCHOOL_NOT_FOUND,
+    INCORRECT_PASSWORD
 )
 
 
 class UserNotFound(BaseAPIException):
     status_code = 400
     default_code = USER_NOT_FOUND
+
+
+class SchoolNotFound(BaseAPIException):
+    status_code = 400
+    default_code = SCHOOL_NOT_FOUND
 
 
 class UserAlreadyHasActiveBooking(BaseAPIException):
@@ -37,3 +44,8 @@ class UserAlreadyExists(BaseAPIException):
 class InvalidOTP(BaseAPIException):
     status_code = 400
     default_code = INVALID_OTP
+
+
+class InCorrectPassword(BaseAPIException):
+    status_code = 400
+    default_code = INCORRECT_PASSWORD
