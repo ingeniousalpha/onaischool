@@ -144,3 +144,12 @@ class AbstractDescriptionModel(MainModel):
         if self.description is not None:
             return str(self.description)
         return "Не задано"
+
+
+class TimestampModel(MainModel):
+    created_at = models.DateTimeField(_("Время создания"), auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(_("Время последнего изменения"), auto_now=True, db_index=True)
+
+    class Meta:
+        abstract = True
+

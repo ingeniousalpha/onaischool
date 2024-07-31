@@ -9,7 +9,8 @@ from config.settings import Languages
 from .managers import UserManager
 
 from .. import Grades, Roles
-from ..content.models import School
+from ..common.models import TimestampModel
+from ..content.models import School, Course
 
 
 class User(PermissionsMixin, AbstractBaseUser):
@@ -96,3 +97,11 @@ class User(PermissionsMixin, AbstractBaseUser):
         if self.created_at + timezone.timedelta(days=1) > timezone.now():
             return True
         return self.is_active
+
+
+class MyTopic(TimestampModel):
+    user = models.ForeignKey(User, verbose_name="Пользователь",
+                             on_delete=models.CASCADE, null=True, blank=True, related_name="my_topics")
+
+    course = models.ForeignKey(Course, verbose_name="Курс",
+                              on_delete=models.CASCADE, null=True, blank=True, related_name="my_topics")
