@@ -47,7 +47,7 @@ class AddChildView(PrivateSONRendererMixin, CreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class VerifyOTPV2View(PublicJSONRendererMixin, GenericAPIView):
+class VerifyOTPView(PublicJSONRendererMixin, GenericAPIView):
     queryset = User.objects.all()
     serializer_class = VerifyOTPSerializer
 

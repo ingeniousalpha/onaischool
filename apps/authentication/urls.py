@@ -4,7 +4,7 @@ from .views import (
     SigninView,
     SignupView,
     TokenRefreshView,
-    VerifyOTPV2View,
+    VerifyOTPView,
     MyFastTokenView,
     AddChildView
 )
@@ -14,7 +14,7 @@ urlpatterns = [
     path("signup/", SignupView.as_view(), name="signup_view"),
     path("add-children", AddChildView.as_view(), name="add-child-view"),
     # path("signin/fast_token", MyFastTokenView.as_view(), name="fast_token_view"),
-    # path("verify/", VerifyOTPV2View.as_view(), name="verify_otp_view"),
+    path("verify/", VerifyOTPView.as_view(), name="verify_otp_view"),
     path("refresh/", TokenRefreshView.as_view(), name="token_refresh_view"),
 ]
 

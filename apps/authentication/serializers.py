@@ -135,7 +135,6 @@ class SigninWithOTPSerializer(serializers.Serializer):
 
 
 class VerifyOTPSerializer(serializers.Serializer):
-    club_branch = serializers.IntegerField(write_only=True)
     mobile_phone = serializers.CharField(required=True, write_only=True)
     otp_code = serializers.CharField(required=True, write_only=True, min_length=4, max_length=4)
 
