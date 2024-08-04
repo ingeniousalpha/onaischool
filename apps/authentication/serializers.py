@@ -98,7 +98,7 @@ class AddChildrenSerializer(serializers.ModelSerializer):
         if user.role != Roles.PARENT:
             raise AccessDenied
 
-        school = School.objects.get(id=attrs['school_id'])
+        school = School.objects.filter(id=attrs['school_id']).first()
         if school is None:
             raise SchoolNotFound
 
