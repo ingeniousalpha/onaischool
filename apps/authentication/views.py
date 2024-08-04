@@ -1,15 +1,17 @@
 from django.contrib.auth import get_user_model
 from rest_framework import status
-from rest_framework.generics import CreateAPIView, GenericAPIView
+from rest_framework.generics import CreateAPIView, GenericAPIView, ListAPIView
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.views import TokenRefreshView as DRFTokenRefreshView
 
 from apps.common.mixins import PublicJSONRendererMixin, PrivateSONRendererMixin
+from .exceptions import UserNotFound
 # from apps.notifications.tasks import task_send_letter_for_email_confirmation
 from .serializers import (
     SigninWithoutOTPSerializer, TokenRefreshSerializer, VerifyOTPSerializer,
-    MyTokenObtainSerializer, SignupSerializer, AddChildrenSerializer)
+    MyTokenObtainSerializer, SignupSerializer, AddChildrenSerializer, AccountSerializer, AuthByChildrenSerializer)
 
 User = get_user_model()
 
@@ -39,6 +41,7 @@ class AddChildView(PrivateSONRendererMixin, CreateAPIView):
     serializer_class = AddChildrenSerializer
 
     def create(self, request, *args, **kwargs):
+        print(request.data)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -52,9 +55,13 @@ class VerifyOTPView(PublicJSONRendererMixin, GenericAPIView):
     serializer_class = VerifyOTPSerializer
 
     def post(self, request):
-        serializer = self.get_serializer(data=request.data)
+        user = User.objects.filter(mobile_phone=request.data.get('mobile_phone')).first()
+        if user is None:
+            raise UserNotFound
+
+        serializer = self.get_serializer(instance=user, data=request.data)
         serializer.is_valid(raise_exception=True)
-        return Response(data=serializer.validated_data)
+        return Response(data=serializer.data)
 
 
 class TokenRefreshView(PublicJSONRendererMixin, DRFTokenRefreshView):
@@ -63,3 +70,23 @@ class TokenRefreshView(PublicJSONRendererMixin, DRFTokenRefreshView):
 
 class MyFastTokenView(TokenObtainPairView):
     serializer_class = MyTokenObtainSerializer
+
+
+class AccountView(PrivateSONRendererMixin, ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = AccountSerializer
+
+    def list(self, request, *args, **kwargs):
+        data = self.get_serializer(request.user.children, many=True).data
+
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class AuthByChildrenView(PrivateSONRendererMixin, APIView):
+    serializer_class = AuthByChildrenSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data,
+                                           context={'request': request})
+        serializer.is_valid()
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)

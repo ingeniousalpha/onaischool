@@ -7,7 +7,8 @@ from config.constants.error_codes import (
     NOT_APPROVED_USER_CAN_NOT_BOOK_SEVERAL_COMPUTERS,
     NOT_SUFFICIENT_CASHBACK_AMOUNT,
     SCHOOL_NOT_FOUND,
-    INCORRECT_PASSWORD
+    INCORRECT_PASSWORD,
+    ACCESS_DENIED
 )
 
 
@@ -49,3 +50,8 @@ class InvalidOTP(BaseAPIException):
 class InCorrectPassword(BaseAPIException):
     status_code = 400
     default_code = INCORRECT_PASSWORD
+
+
+class AccessDenied(BaseAPIException):
+    status_code = 400
+    default_code = ACCESS_DENIED

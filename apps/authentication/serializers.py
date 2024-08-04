@@ -7,8 +7,9 @@ from rest_framework_simplejwt.serializers import TokenRefreshSerializer as BaseT
 from six import text_type
 
 from apps.users.services import get_or_create_user_by_phone
-from .exceptions import UserNotFound, UserAlreadyExists, SchoolNotFound, InCorrectPassword
+from .exceptions import UserNotFound, UserAlreadyExists, SchoolNotFound, InCorrectPassword, AccessDenied, InvalidOTP
 from .services import generate_access_and_refresh_tokens_for_user, validate_password
+from .. import Roles
 from ..content.models import School
 
 User = get_user_model()
@@ -80,6 +81,10 @@ class SignupSerializer(serializers.ModelSerializer):
 
 
 class AddChildrenSerializer(serializers.ModelSerializer):
+
+    school_id = serializers.IntegerField()
+    full_name = serializers.CharField()
+
     class Meta:
         model = User
         fields = (
@@ -88,10 +93,11 @@ class AddChildrenSerializer(serializers.ModelSerializer):
             "grade"
         )
 
-    def to_representation(self, instance):
-        return generate_access_and_refresh_tokens_for_user(instance)
-
     def validate(self, attrs):
+        user = self.context.get('request').user
+        if user.role != Roles.PARENT:
+            raise AccessDenied
+
         school = School.objects.get(id=attrs['school_id'])
         if school is None:
             raise SchoolNotFound
@@ -99,10 +105,11 @@ class AddChildrenSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        user = self.context.get('user')
+        user = self.context.get('request').user
         if user is not None:
             child = User.objects.create(full_name=validated_data['full_name'], parent_id=user.id,
-                                        grade=validated_data['grade'])
+                                        grade=validated_data['grade'],
+                                        school_id=validated_data['school_id'])
 
             return child
         return user
@@ -137,6 +144,15 @@ class SigninWithOTPSerializer(serializers.Serializer):
 class VerifyOTPSerializer(serializers.Serializer):
     mobile_phone = serializers.CharField(required=True, write_only=True)
     otp_code = serializers.CharField(required=True, write_only=True, min_length=4, max_length=4)
+
+    def to_representation(self, instance):
+        return generate_access_and_refresh_tokens_for_user(instance)
+
+    def validate(self, attrs):
+        if attrs['otp_code'] != '1111':
+            raise InvalidOTP
+
+        return attrs
 
 
 class RegisterV2Serializer(serializers.ModelSerializer):
@@ -199,4 +215,31 @@ class MyTokenObtainSerializer(serializers.Serializer):
             "refresh_token": text_type(refresh),
             "access_token": text_type(new_token),
         }
+
+
+class AccountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'full_name']
+
+
+class AuthByChildrenSerializer(serializers.Serializer):
+    child_id = serializers.IntegerField(required=False)
+
+    def validate(self, attrs):
+        user = self.context.get('request').user
+        child = User.objects.get(id=attrs['child_id'])
+        if child is None:
+            raise UserNotFound
+        if not user.children.filter(id=child.id).exists():
+            raise AccessDenied
+
+        refresh = TokenObtainPairSerializer.get_token(child)
+        new_token = refresh.access_token
+
+        return {
+            "refresh_token": text_type(refresh),
+            "access_token": text_type(new_token),
+        }
+
 

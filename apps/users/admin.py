@@ -35,7 +35,7 @@ class UserCreationForm(forms.ModelForm):
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    list_display = ('id', 'mobile_phone', 'email', 'is_email_confirmed', 'is_staff',)
+    list_display = ('id', 'mobile_phone', 'full_name', 'email', 'is_email_confirmed', 'is_staff',)
     list_filter = ('is_staff',)
     list_display_links = ('id', 'mobile_phone', 'email', 'is_staff',)
     search_fields = ('email', 'uuid', 'mobile_phone')
@@ -50,8 +50,9 @@ class UserAdmin(BaseUserAdmin):
                 'uuid',
                 'mobile_phone',
                 'email',
+                'full_name',
                 'password',
-                'club',
+                'role',
                 'is_superuser',
                 'is_active',
                 'is_staff',
@@ -69,7 +70,7 @@ class UserAdmin(BaseUserAdmin):
                 'email',
                 'password1',
                 'password2',
-                'club',
+                'role',
                 'is_superuser',
                 'is_staff',
                 'groups',

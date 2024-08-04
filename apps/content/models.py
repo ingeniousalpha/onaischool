@@ -5,10 +5,12 @@ from localized_fields.fields import LocalizedTextField, LocalizedFileField
 from apps.common.models import PriorityModel, AbstractRequiredNameModel, AbstractRequiredDescriptionModel, \
     AbstractDescriptionModel
 from apps.content import Grades, Quarter
+from apps.location.models import City
 
 
 class School(PriorityModel, AbstractRequiredNameModel):
-    ...
+    city = models.ForeignKey(City, verbose_name="Город",
+                             on_delete=models.SET_NULL, null=True, blank=True, related_name="schools")
 
     class Meta:
         verbose_name = _("Школа")

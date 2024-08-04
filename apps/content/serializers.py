@@ -1,7 +1,14 @@
 from rest_framework import serializers
 
 from apps.common.serializers import AbstractNameSerializer, AbstractDescriptionSerializer, AbstractImageSerializer
-from apps.content.models import Direction, Subject, Course, Chapter, Topic
+from apps.content.models import Direction, Subject, Course, Chapter, Topic, School
+
+
+class SchoolSerializer(AbstractNameSerializer):
+
+    class Meta:
+        model = School
+        fields = ['id', 'name']
 
 
 class TopicSerializer(AbstractNameSerializer, AbstractImageSerializer):
