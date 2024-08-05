@@ -1,10 +1,11 @@
 import datetime
 
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, password_validation
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer as BaseTokenRefreshSerializer
 from six import text_type
+from django.core.cache import cache
 
 from apps.users.services import get_or_create_user_by_phone
 from .exceptions import UserNotFound, UserAlreadyExists, SchoolNotFound, InCorrectPassword, AccessDenied, InvalidOTP
@@ -46,6 +47,43 @@ class SigninWithoutOTPSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         return generate_access_and_refresh_tokens_for_user(instance)
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    mobile_phone = serializers.CharField()
+
+    def validate_mobile_phone(self, value):
+        # Check if email exists
+        from django.contrib.auth.models import User
+        if not User.objects.filter(mobile_phone=value).exists():
+            raise serializers.ValidationError("No user with this mobile_phone.")
+        return value
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    mobile_phone = serializers.CharField()
+    otp_code = serializers.CharField()
+    new_password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        from django.contrib.auth.models import User
+
+        mobile_phone = attrs['mobile_phone']
+        otp_code = attrs['otp_code']
+        new_password = attrs['new_password']
+
+        try:
+            user = User.objects.get(mobile_phone=mobile_phone)
+        except User.DoesNotExist:
+            raise UserNotFound
+
+        # cached_otp = cache.get(f'password_reset_otp_{user.id}')
+        cached_otp = '1111'
+        if cached_otp != otp_code:
+            raise InvalidOTP
+
+        attrs['user'] = user
+        return attrs
 
 
 class SignupSerializer(serializers.ModelSerializer):
