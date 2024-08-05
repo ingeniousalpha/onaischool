@@ -7,7 +7,7 @@ from apps.content.serializers import DirectionSerializer, DirectionRetrieveSeria
     TopicSerializer, TopicRetrieveSerializer
 
 
-class CatalogView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
+class DirectionView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
     queryset = Direction.objects.all()
     serializer_class = DirectionSerializer
 

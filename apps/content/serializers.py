@@ -1,3 +1,5 @@
+from itertools import groupby
+from operator import itemgetter
 from rest_framework import serializers
 
 from apps.common.serializers import AbstractNameSerializer, AbstractDescriptionSerializer, AbstractImageSerializer
@@ -5,7 +7,6 @@ from apps.content.models import Direction, Subject, Course, Chapter, Topic, Scho
 
 
 class SchoolSerializer(AbstractNameSerializer):
-
     class Meta:
         model = School
         fields = ['id', 'name']
@@ -13,6 +14,7 @@ class SchoolSerializer(AbstractNameSerializer):
 
 class TopicSerializer(AbstractNameSerializer, AbstractImageSerializer):
     video_link = serializers.SerializerMethodField()
+
     class Meta:
         model = Topic
         fields = ['id', 'name', 'video_link', 'image']
@@ -22,10 +24,8 @@ class TopicSerializer(AbstractNameSerializer, AbstractImageSerializer):
 
 
 class TopicRetrieveSerializer(TopicSerializer, AbstractDescriptionSerializer):
-
     class Meta(TopicSerializer.Meta):
         fields = TopicSerializer.Meta.fields + ['description']
-
 
     def get_video_link(self, obj):
         return obj.video_link.translate()
@@ -36,21 +36,38 @@ class ChapterSerializer(AbstractNameSerializer):
 
     class Meta:
         model = Chapter
-        fields = ['id', 'name', 'quarter', 'topics']
+        fields = ['id', 'name', 'topics']
 
     def get_topics(self, obj):
         return TopicSerializer(obj.topics, many=True, context=self.context).data
 
 
 class CourseSerializer(AbstractNameSerializer):
-    chapters = serializers.SerializerMethodField()
+    quarters = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
-        fields = ['id', 'name', 'grade', 'chapters']
+        fields = ['id', 'name', 'grade', 'quarters']
 
-    def get_chapters(self, obj):
-        return ChapterSerializer(obj.chapters, many=True, context=self.context).data
+    def get_quarters(self, obj):
+        chapters = obj.chapters.all().order_by('quarter', 'priority')
+        grouped_chapters = groupby(chapters, key=lambda c: c.quarter)
+
+        grouped_chapters_data = [
+            {
+                'quarter': key,
+                'chapters': ChapterSerializer(list(groups), many=True, context=self.context).data
+            }
+            for key, groups in grouped_chapters
+        ]
+
+        return grouped_chapters_data
+
+
+class CourseListSerializer(AbstractNameSerializer):
+    class Meta:
+        model = Course
+        fields = ['id', 'name', 'grade']
 
 
 class SubjectSerializer(AbstractNameSerializer):
@@ -62,6 +79,13 @@ class SubjectSerializer(AbstractNameSerializer):
 
     def get_courses(self, obj):
         return CourseSerializer(obj.courses, many=True, context=self.context).data
+
+
+class SubjectListSerializer(SubjectSerializer):
+    courses = serializers.SerializerMethodField()
+
+    def get_courses(self, obj):
+        return CourseListSerializer(obj.courses.order_by('grade'), many=True, context=self.context).data
 
 
 class DirectionSerializer(AbstractNameSerializer, AbstractDescriptionSerializer, AbstractImageSerializer):
@@ -82,4 +106,4 @@ class DirectionRetrieveSerializer(DirectionSerializer):
         fields = DirectionSerializer.Meta.fields + ['subjects']
 
     def get_subjects(self, obj):
-        return SubjectSerializer(obj.subjects, many=True, context=self.context).data
+        return SubjectListSerializer(obj.subjects, many=True, context=self.context).data

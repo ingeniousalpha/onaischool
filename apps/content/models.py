@@ -53,7 +53,7 @@ class Course(PriorityModel, AbstractRequiredNameModel):
     class Meta:
         verbose_name = _("Курс")
         verbose_name_plural = _("Курсы")
-        ordering = ['priority']
+        ordering = ['grade', 'priority']
 
     def __str__(self):
         return f"{self.grade}кл {self.subject}"
@@ -67,7 +67,7 @@ class Chapter(PriorityModel, AbstractRequiredNameModel):
     class Meta:
         verbose_name = _("Раздел")
         verbose_name_plural = _("Разделы")
-        ordering = ['priority']
+        ordering = ['quarter', 'priority']
 
     def __str__(self):
         return f"{self.name.ru} {self.quarter} четверть {self.course}"
