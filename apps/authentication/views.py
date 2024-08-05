@@ -37,7 +37,8 @@ class SignupView(PublicJSONRendererMixin, CreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class PasswordResetRequestView(APIView):
+class PasswordResetRequestView(PublicJSONRendererMixin, APIView):
+
     def post(self, request, *args, **kwargs):
         serializer = PasswordResetRequestSerializer(data=request.data)
         if serializer.is_valid():
@@ -47,7 +48,7 @@ class PasswordResetRequestView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class PasswordResetConfirmView(APIView):
+class PasswordResetConfirmView(PublicJSONRendererMixin, APIView):
     def post(self, request, *args, **kwargs):
         serializer = PasswordResetConfirmSerializer(data=request.data)
         if serializer.is_valid():

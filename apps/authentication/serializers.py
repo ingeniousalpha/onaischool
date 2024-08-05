@@ -53,8 +53,6 @@ class PasswordResetRequestSerializer(serializers.Serializer):
     mobile_phone = serializers.CharField()
 
     def validate_mobile_phone(self, value):
-        # Check if email exists
-        from django.contrib.auth.models import User
         if not User.objects.filter(mobile_phone=value).exists():
             raise serializers.ValidationError("No user with this mobile_phone.")
         return value
@@ -66,7 +64,6 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     new_password = serializers.CharField(write_only=True)
 
     def validate(self, attrs):
-        from django.contrib.auth.models import User
 
         mobile_phone = attrs['mobile_phone']
         otp_code = attrs['otp_code']
