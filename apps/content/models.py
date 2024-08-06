@@ -56,7 +56,7 @@ class Course(PriorityModel, AbstractRequiredNameModel):
         ordering = ['grade', 'priority']
 
     def __str__(self):
-        return f"{self.grade}кл {self.subject}"
+        return f"{self.subject} {self.grade}кл "
 
 
 class Chapter(PriorityModel, AbstractRequiredNameModel):

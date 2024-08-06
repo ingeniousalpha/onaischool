@@ -18,7 +18,7 @@ class Grades(TextChoices):
 
 
 class Quarter(TextChoices):
-    FIRST = '1', _('Grade 1')
-    SECOND = '2', _('Grade 2')
-    THIRD = '3', _('Grade 3')
-    FOURTH = '4', _('Grade 4')
+    FIRST = '1', _('1 четверть')
+    SECOND = '2', _('2 четверть')
+    THIRD = '3', _('3 четверть')
+    FOURTH = '4', _('4 четверть')
