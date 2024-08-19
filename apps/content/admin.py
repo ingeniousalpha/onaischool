@@ -3,6 +3,7 @@ from django.contrib.contenttypes.admin import GenericTabularInline
 from localized_fields.admin import LocalizedFieldsAdminMixin
 from adminsortable2.admin import SortableAdminMixin, SortableInlineAdminMixin
 
+from apps.analytics.admin import QuizInline, AssessmentInline
 from apps.common.admin import ReadOnlyMixin
 from apps.content.models import *
 
@@ -33,18 +34,19 @@ class SchoolAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
 @admin.register(Direction)
 class DirectionAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     list_display = ('id', 'name', 'description', 'image', 'priority')
-    inlines = [SubjectInline]
+    inlines = [SubjectInline, AssessmentInline]
 
 
 @admin.register(Subject)
 class SubjectAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     list_display = ('id', 'name', 'direction', 'priority')
-    inlines = [CourseInline]
+    inlines = [CourseInline, QuizInline]
 
 
 @admin.register(Course)
 class CourseAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     list_display = ('id', 'name', 'subject', 'grade', 'priority')
+    inlines = [QuizInline]
 
 
 @admin.register(Chapter)
@@ -56,3 +58,4 @@ class ChapterAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
 @admin.register(Topic)
 class TopicAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     list_display = ('id', 'name', 'description', 'video_link', 'image', 'chapter', 'priority')
+    inlines = [QuizInline]

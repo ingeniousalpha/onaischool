@@ -9,6 +9,7 @@ from config.settings import Languages
 from .managers import UserManager
 
 from .. import Grades, Roles
+from ..analytics.models import Question, AnswerOption, Quiz
 from ..common.models import TimestampModel
 from ..content.models import School, Course
 
@@ -99,3 +100,35 @@ class MyTopic(TimestampModel):
 
     course = models.ForeignKey(Course, verbose_name="Курс",
                               on_delete=models.CASCADE, null=True, blank=True, related_name="my_topics")
+
+
+class UserQuizQuestion(TimestampModel):
+    quiz = models.ForeignKey(
+        Quiz,
+        on_delete=models.CASCADE,
+        null=False,
+        related_name='user_quiz_questions'
+    )
+    user = models.ForeignKey(
+        User,
+        verbose_name="Пользователь",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="user_quiz_questions")
+    question = models.ForeignKey(
+        Question,
+        on_delete=models.CASCADE,
+        null=False,
+        related_name='user_quiz_questions'
+    )
+    answers = models.ManyToManyField(
+        AnswerOption,
+        null=True,
+        blank=True,
+        related_name='user_quiz_questions'
+    )
+    is_correct = models.BooleanField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['id']

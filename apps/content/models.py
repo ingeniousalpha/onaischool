@@ -31,6 +31,9 @@ class Direction(PriorityModel, AbstractRequiredNameModel, AbstractRequiredDescri
         verbose_name_plural = _("Directions")
         ordering = ['priority']
 
+    def __str__(self):
+        return self.name.ru
+
 
 class Subject(PriorityModel, AbstractRequiredNameModel):
     direction = models.ForeignKey(Direction, verbose_name="Направление",

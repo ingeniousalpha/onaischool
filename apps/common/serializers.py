@@ -52,3 +52,14 @@ class AbstractImageSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(obj.image.translate().url)
         return ''
 
+
+class AbstractTitleSerializer(serializers.ModelSerializer):
+    title = serializers.SerializerMethodField()
+
+    class Meta:
+        abstract = True
+
+    def get_title(self, obj):
+        return obj.title.translate()
+
+

@@ -153,3 +153,18 @@ class TimestampModel(MainModel):
     class Meta:
         abstract = True
 
+
+class AbstractTitleModel(MainModel):
+    title = LocalizedCharField(
+        verbose_name=_("Заголовок"),
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        if self.title is not None:
+            return str(self.title)
+        return "Не задано"

@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from apps.authentication.services import validate_password_in_forms
-from .models import User
+from .models import User, UserQuizQuestion
 
 
 class UserCreationForm(forms.ModelForm):
@@ -78,3 +78,6 @@ class UserAdmin(BaseUserAdmin):
             ),
         }),
     )
+
+
+admin.site.register(UserQuizQuestion)
