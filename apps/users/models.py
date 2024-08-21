@@ -9,7 +9,7 @@ from config.settings import Languages
 from .managers import UserManager
 
 from .. import Grades, Roles
-from ..analytics.models import Question, AnswerOption, Quiz
+from ..analytics.models import Question, AnswerOption, Quiz, EntranceExam, ExamQuestion, ExamAnswerOption
 from ..common.models import TimestampModel
 from ..content.models import School, Course
 
@@ -124,9 +124,33 @@ class UserQuizQuestion(TimestampModel):
     )
     answers = models.ManyToManyField(
         AnswerOption,
-        null=True,
         blank=True,
         related_name='user_quiz_questions'
+    )
+    is_correct = models.BooleanField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['id']
+
+
+class UserExamQuestion(TimestampModel):
+    exam_question = models.ForeignKey(
+        ExamQuestion,
+        on_delete=models.CASCADE,
+        null=False,
+        related_name='user_exam_questions'
+    )
+    user = models.ForeignKey(
+        User,
+        verbose_name="Пользователь",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="user_exam_questions")
+    answers = models.ManyToManyField(
+        ExamAnswerOption,
+        blank=True,
+        related_name='user_exam_questions'
     )
     is_correct = models.BooleanField(null=True, blank=True)
 

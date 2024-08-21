@@ -1,12 +1,12 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 
-from apps.analytics.views import TopicQuizzesView, CheckAnswerView, EntranceExamView, ExamQuestionView
+from apps.analytics.views import TopicQuizzesView, CheckAnswerView, EntranceExamView, EntranceExamCheckAnswerView
 
 
 urlpatterns = [
     path('check-answer', CheckAnswerView.as_view()),
-    # path('exams/subjects/<pk:int>', ExamQuestionView.as_view())
+    path('exam-check-answer', EntranceExamCheckAnswerView.as_view())
 ]
 
 router = DefaultRouter()

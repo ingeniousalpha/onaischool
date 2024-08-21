@@ -7,11 +7,11 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from django.utils import timezone
 
 from apps.analytics.exceptions import AnswerDoesntExists
-from apps.analytics.models import Quiz, Question, AnswerOption, EntranceExam
+from apps.analytics.models import Quiz, Question, AnswerOption, EntranceExam, ExamAnswerOption
 from apps.analytics.serializers import QuizSerializer, QuizQuestionsSerializer, QuizQuestionDetailSerializer, \
-    CheckAnswerSerializer, EntranceExamSerializer, ExtranceExamDetailSerializer
+    CheckAnswerSerializer, EntranceExamSerializer, ExtranceExamDetailSerializer, EntranceCheckAnswerSerializer
 from apps.common.mixins import PrivateSONRendererMixin
-from apps.users.models import UserQuizQuestion
+from apps.users.models import UserQuizQuestion, UserExamQuestion
 
 
 class EntranceExamView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
@@ -52,7 +52,7 @@ class TopicQuizzesView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
 
         quiz = Quiz.objects.filter(filter_conditions).first()
         if quiz:
-            user_quiz_questions = user.user_quiz_questions.filter(quiz_id=quiz.id)
+            user_quiz_questions = user.user_quiz_questions.filter(exam_question=quiz.id)
             if user_quiz_questions.count() == quiz.questions_amount:
                 questions = [uqq.question for uqq in user_quiz_questions]
             else:
@@ -80,7 +80,7 @@ class CheckAnswerView(PrivateSONRendererMixin, APIView):
 
     def post(self, request, *args, **kwargs):
         user = request.user
-        serializer = CheckAnswerSerializer(request.data).data
+        serializer = CheckAnswerSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer_data = serializer.validated_data
 
@@ -97,21 +97,64 @@ class CheckAnswerView(PrivateSONRendererMixin, APIView):
         if not answers.exists():
             raise AnswerDoesntExists
         data = []
-        question = Question.objects.filter(id=question_id).first()
+        is_correct = True
+        uqq = UserQuizQuestion.objects.filter(user=user, question_id=question_id).first()
+        if uqq:
+            uqq.answers.clear()
         for answer in answers:
-            uqq = UserQuizQuestion.objects.filter(user=user, question_id=question_id).first()
-            uqq.answers.append(answer)
-            uqq.is_correct = answer.is_correct
+            uqq.answers.add(answer.id)
+            if not answer.is_correct:
+                is_correct = False
             uqq.updated_at = timezone.now()
-            uqq.save(update_fields=['answers', 'is_correct', 'updated_at'])
-
+            uqq.save(update_fields=['updated_at'])
             data.append({
                     'answer_id': answer.id,
                     'is_correct': answer.is_correct,
                     'life_count': 4
             })
+        uqq.is_correct = is_correct
+        uqq.save(update_fields=['is_correct'])
         return Response(data)
 
 
-class ExamQuestionView(PrivateSONRendererMixin, APIView):
-    ...
+class EntranceExamCheckAnswerView(PrivateSONRendererMixin, APIView):
+    serializer_class = EntranceCheckAnswerSerializer
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        serializer = EntranceCheckAnswerSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer_data = serializer.validated_data
+
+        options = serializer_data.get('options', [])
+        question_id = serializer_data.get('question_id')
+
+        if not options:
+            return Response({'error': 'No options provided'}, status=400)
+
+        answers = ExamAnswerOption.objects.filter(
+            id__in=options,
+            exam_question_id=question_id
+        )
+        if not answers.exists():
+            raise AnswerDoesntExists
+        data = []
+        is_correct = True
+        uqq = UserExamQuestion.objects.filter(user=user, exam_question=question_id).first()
+        if uqq:
+            uqq.answers.clear()
+        for answer in answers:
+            uqq.answers.add(answer.id)
+            if not answer.is_correct:
+                is_correct = False
+            uqq.updated_at = timezone.now()
+            uqq.save(update_fields=['updated_at'])
+            data.append({
+                    'answer_id': answer.id,
+                    'is_correct': answer.is_correct,
+                    'life_count': 4
+            })
+        uqq.is_correct = is_correct
+        uqq.save(update_fields=['is_correct'])
+        return Response(data)
+
