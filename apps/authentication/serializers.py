@@ -228,7 +228,7 @@ class TokenRefreshSerializer(BaseTokenRefreshSerializer):
         }
 
 
-CUSTOM_LIFETIME = datetime.timedelta(seconds=30)
+# CUSTOM_LIFETIME = datetime.timedelta(seconds=30)
 
 
 class MyTokenObtainSerializer(serializers.Serializer):
@@ -245,7 +245,7 @@ class MyTokenObtainSerializer(serializers.Serializer):
 
         refresh = TokenObtainPairSerializer.get_token(user)
         new_token = refresh.access_token
-        new_token.set_exp(lifetime=CUSTOM_LIFETIME)
+        # new_token.set_exp(lifetime=CUSTOM_LIFETIME)
         return {
             "refresh_token": text_type(refresh),
             "access_token": text_type(new_token),
