@@ -5,6 +5,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer as BaseTokenRefreshSerializer
 from six import text_type
+from constance import config
 from django.core.cache import cache
 
 from apps.users.services import get_or_create_user_by_phone
@@ -228,7 +229,6 @@ class TokenRefreshSerializer(BaseTokenRefreshSerializer):
         }
 
 
-# CUSTOM_LIFETIME = datetime.timedelta(seconds=30)
 
 
 class MyTokenObtainSerializer(serializers.Serializer):
@@ -245,7 +245,9 @@ class MyTokenObtainSerializer(serializers.Serializer):
 
         refresh = TokenObtainPairSerializer.get_token(user)
         new_token = refresh.access_token
-        # new_token.set_exp(lifetime=CUSTOM_LIFETIME)
+
+        if config.CUSTOM_TOKEN_TTL_TURNED_ON:
+            new_token.set_exp(lifetime=config.CUSTOM_TOKEN_TTL_SECONDS)
         return {
             "refresh_token": text_type(refresh),
             "access_token": text_type(new_token),

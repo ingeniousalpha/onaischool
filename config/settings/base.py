@@ -92,18 +92,14 @@ CONSTANCE_CONFIG = {
     "CASHBACK_TURNED_ON": (True, "Включить кэшбеки", bool),
     "CASHBACK_PERCENT": (5, "% кэшбека от суммы транзакции", int),
     "EXTRA_MINUTES_TO_FIRST_TRANSACTION": (60, "Экстра минуты бесплатно для первой транзакции", int),
+    "CUSTOM_TOKEN_TTL_TURNED_ON": (False, "Включить кастомный период жизни access токена", bool),
+    "CUSTOM_TOKEN_TTL_SECONDS": (15, "период жизни access_token в секундах", int),
 }
 
 CONSTANCE_CONFIG_FIELDSETS = OrderedDict([
-    ("Settings", ("INTEGRATIONS_TURNED_ON",)),
-    ("Billing", (
-        "FREE_SECONDS_BEFORE_START_TARIFFING",
-        "PAYMENT_EXPIRY_TIME",
-        "MULTIBOOKING_LAUNCHING_TIME",
-        "GAMER_PRO_COMMISSION",
-        "CASHBACK_TURNED_ON",
-        "CASHBACK_PERCENT",
-        "EXTRA_MINUTES_TO_FIRST_TRANSACTION",
+    ("Settings", (
+        "CUSTOM_TOKEN_TTL_TURNED_ON",
+        "CUSTOM_TOKEN_TTL_SECONDS",
     )),
     ("OTP settings", ("USE_DEFAULT_OTP", "DEFAULT_OTP",)),
     ("Exception Handling", ("EXCEPTION_HANDLING_STATUS",)),
