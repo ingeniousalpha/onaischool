@@ -109,7 +109,8 @@ class SignupSerializer(serializers.ModelSerializer):
         if user:
             raise UserAlreadyExists
 
-        user = User.objects.create(mobile_phone=validated_data['mobile_phone'])
+        # TODO: tempoparily set role Parent
+        user = User.objects.create(mobile_phone=validated_data['mobile_phone'], role=Roles.PARENT)
         user.set_password(validated_data['password'])
         user.save()
 
@@ -227,7 +228,6 @@ class TokenRefreshSerializer(BaseTokenRefreshSerializer):
             "access_token": data['access'],
             "refresh_token": data['refresh'],
         }
-
 
 
 
