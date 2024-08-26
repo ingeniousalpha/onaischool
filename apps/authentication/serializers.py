@@ -247,7 +247,7 @@ class MyTokenObtainSerializer(serializers.Serializer):
         new_token = refresh.access_token
 
         if config.CUSTOM_TOKEN_TTL_TURNED_ON:
-            new_token.set_exp(lifetime=config.CUSTOM_TOKEN_TTL_SECONDS)
+            new_token.set_exp(lifetime=datetime.timedelta(seconds=config.CUSTOM_TOKEN_TTL_SECONDS))
         return {
             "refresh_token": text_type(refresh),
             "access_token": text_type(new_token),
