@@ -44,6 +44,7 @@ class AssessmentQuestionInline(admin.StackedInline):
 class AssessmentAnswerOptionInline(admin.StackedInline):
     model = ExamAnswerOption
     fields = ('id', 'text', 'image', 'is_correct')
+    extra = 0
 
 
 @admin.register(Quiz)

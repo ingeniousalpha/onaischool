@@ -35,7 +35,7 @@ class UserCreationForm(forms.ModelForm):
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    list_display = ('id', 'mobile_phone', 'full_name', 'email', 'is_email_confirmed', 'is_staff',)
+    list_display = ('id', 'mobile_phone', 'role', 'full_name', 'email', 'is_email_confirmed', 'is_staff',)
     list_filter = ('is_staff',)
     list_display_links = ('id', 'mobile_phone', 'email', 'is_staff',)
     search_fields = ('email', 'uuid', 'mobile_phone')

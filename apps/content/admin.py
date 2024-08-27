@@ -20,18 +20,22 @@ class TopicAdminForm(forms.ModelForm):
         fields = '__all__'
 
     def save(self, commit=True):
-        # Save the topic instance first to ensure it has an ID
         topic = super().save(commit=False)
+
+        # Save the Chapter instance if it's new and not yet saved
+        if topic.chapter and topic.chapter.pk is None:
+            topic.chapter.save()
+
+        # Save the Topic instance if it has no PK
         if topic.pk is None:
             topic.save()
 
         file = self.cleaned_data.get('file')
 
-        print(topic)
-        print(topic.pk)
-        if file and topic.pk:
+        if file:
             self.validate_and_process_file(file, topic)
 
+        # Save the Topic instance again after processing, if commit=True
         if commit:
             topic.save()
 
@@ -128,8 +132,9 @@ class CourseInline(admin.StackedInline):
 
 class TopicInline(admin.StackedInline):
     model = Topic
-    fields = ('id', 'name', 'description', 'video_link', 'image', 'chapter')
+    fields = ('id', 'name', 'description', 'video_link', 'image', 'chapter', 'file')
     extra = 0
+    form = TopicAdminForm
 
 
 @admin.register(School)
@@ -140,30 +145,36 @@ class SchoolAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
 @admin.register(Direction)
 class DirectionAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     list_display = ('id', 'name', 'description', 'image', 'priority')
+    list_editable = ('priority',)
     inlines = [SubjectInline, AssessmentInline]
 
 
 @admin.register(Subject)
 class SubjectAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     list_display = ('id', 'name', 'direction', 'priority')
+    list_editable = ('priority',)
     inlines = [CourseInline, QuizInline]
 
 
 @admin.register(Course)
 class CourseAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     list_display = ('id', 'name', 'subject', 'grade', 'priority')
+    list_filter = ('subject',)
+    list_editable = ('priority',)
     inlines = [QuizInline]
 
 
 @admin.register(Chapter)
 class ChapterAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     list_display = ('id', 'name', 'quarter', 'course', 'priority')
+    list_editable = ('priority',)
     inlines = [TopicInline]
 
 
 @admin.register(Topic)
 class TopicAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     list_display = ('id', 'name', 'description', 'video_link', 'image', 'chapter', 'priority')
+    list_editable = ('priority',)
     form = TopicAdminForm
     inlines = [QuizInline]
 

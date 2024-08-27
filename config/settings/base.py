@@ -187,6 +187,9 @@ LANGUAGES = [
     ('en', _('English'))
 ]
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10 MB (Adjust as needed)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880   # 5 MB (Adjust as needed)
+
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
