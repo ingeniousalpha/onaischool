@@ -52,7 +52,7 @@ class TopicQuizzesView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
 
         quiz = Quiz.objects.filter(filter_conditions).first()
         if quiz:
-            user_quiz_questions = user.user_quiz_questions.filter(exam_question=quiz.id)
+            user_quiz_questions = user.user_quiz_questions.filter(question=quiz.id)
             if user_quiz_questions.count() == quiz.questions_amount:
                 questions = [uqq.question for uqq in user_quiz_questions]
             else:
