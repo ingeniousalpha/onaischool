@@ -6,7 +6,7 @@ from django.contrib.contenttypes.admin import GenericTabularInline
 from django.core.exceptions import ValidationError
 from localized_fields.admin import LocalizedFieldsAdminMixin
 from adminsortable2.admin import SortableAdminMixin, SortableInlineAdminMixin
-from apps.analytics.admin import QuizInline, AssessmentInline
+from apps.analytics.admin import QuizInline, ExamInline
 from apps.analytics.models import Quiz, Question, QuestionType, AnswerOption
 from apps.common.admin import ReadOnlyMixin
 from apps.content.models import *
@@ -144,9 +144,9 @@ class SchoolAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
 
 @admin.register(Direction)
 class DirectionAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
-    list_display = ('id', 'name', 'description', 'image', 'priority')
+    list_display = ('id', 'name', 'description', 'image','priority')
     list_editable = ('priority',)
-    inlines = [SubjectInline, AssessmentInline]
+    inlines = [SubjectInline, ExamInline]
 
 
 @admin.register(Subject)

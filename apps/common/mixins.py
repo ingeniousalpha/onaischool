@@ -53,3 +53,12 @@ class PublicJSONRendererMixin(JSONRendererMixin, PublicAPIMixin):
 
 class PrivateSONRendererMixin(JSONRendererMixin, PrivateAPIMixin):
     ...
+
+
+class UserPropertyMixin:
+
+    @property
+    def user(self):
+        if self.context.get('request'):
+            if self.context['request'].user.is_authenticated:
+                return self.context['request'].user

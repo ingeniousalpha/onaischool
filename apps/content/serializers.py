@@ -1,9 +1,14 @@
 from itertools import groupby
 from operator import itemgetter
+
+from django.db.models import Q
 from rest_framework import serializers
 
+from apps.common.mixins import UserPropertyMixin
 from apps.common.serializers import AbstractNameSerializer, AbstractDescriptionSerializer, AbstractImageSerializer
+from apps.content.exception import TopicNotFound
 from apps.content.models import Direction, Subject, Course, Chapter, Topic, School
+from apps.users.models import MyTopic
 
 
 class SchoolSerializer(AbstractNameSerializer):
@@ -29,6 +34,35 @@ class TopicRetrieveSerializer(TopicSerializer, AbstractDescriptionSerializer):
 
     def get_video_link(self, obj):
         return obj.video_link.translate()
+
+
+class TopicSerializerWithSubject(TopicSerializer, UserPropertyMixin):
+    subject_info = serializers.SerializerMethodField()
+    quiz_completion = serializers.SerializerMethodField()
+
+    class Meta(TopicSerializer.Meta):
+        fields = TopicSerializer.Meta.fields + ['subject_info', 'quiz_completion']
+
+    def get_subject_info(self, obj):
+        course = obj.chapter.course
+        direction_name = course.subject.direction.name.translate()
+        return f"{course.subject.name.translate()} {direction_name} {course.grade}кл "
+
+    def get_quiz_completion(self, obj):
+        quizzes = obj.quizzes.all()
+        if quizzes:
+            quiz = quizzes.first()
+            questions_amount = quiz.questions_amount
+            answered_count = self.user.user_quiz_questions.filter(Q(answers__isnull=False)
+                                                                  & Q(quiz_id=quiz.id)).count()
+        else:
+            questions_amount = 0
+            answered_count = 0
+
+        return {
+            'answered': answered_count,
+            'questions_amount': questions_amount
+        }
 
 
 class ChapterSerializer(AbstractNameSerializer):
@@ -107,3 +141,38 @@ class DirectionRetrieveSerializer(DirectionSerializer):
 
     def get_subjects(self, obj):
         return SubjectListSerializer(obj.subjects, many=True, context=self.context).data
+
+
+class MyTopicSerializer(serializers.ModelSerializer, UserPropertyMixin):
+    topic = TopicSerializerWithSubject()
+
+    class Meta:
+        model = MyTopic
+        fields = ['id', 'topic']
+
+
+class MyTopicAddSerializer(serializers.ModelSerializer, UserPropertyMixin):
+    class Meta:
+        model = MyTopic
+        fields = ['id', 'topic']
+
+    def validate(self, attrs):
+        topic_id = attrs['topic']
+        return attrs
+
+    def create(self, validated_data):
+        topic = validated_data['topic']
+        quizzes = topic.quizzes.all()
+        completed = False
+        if quizzes:
+            quiz = quizzes.first()
+            questions_amount = quiz.questions_amount
+            answered_count = self.user.user_quiz_questions.filter(Q(answers__isnull=False)
+                                                                  & Q(quiz_id=quiz.id)).count()
+            if questions_amount == answered_count:
+                completed = True
+
+        instance, created = MyTopic.objects.get_or_create(user=self.user, topic=topic,
+                                                          defaults={'is_completed': completed})
+
+        return instance

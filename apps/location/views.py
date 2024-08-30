@@ -8,6 +8,7 @@ from apps.location.serializers import CitySerializer
 class CitiesView(PublicJSONRendererMixin, ReadOnlyModelViewSet):
     queryset = City.objects.all()
     serializer_class = CitySerializer
+    pagination_class = None
 
     def get_serializer_class(self):
         if self.action == "retrieve":

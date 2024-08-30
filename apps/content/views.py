@@ -1,10 +1,12 @@
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView, ListCreateAPIView
+from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from apps.common.mixins import PrivateSONRendererMixin
 from apps.content.models import Direction, Course, Topic
 from apps.content.serializers import DirectionSerializer, DirectionRetrieveSerializer, CourseSerializer, \
-    TopicSerializer, TopicRetrieveSerializer
+    TopicSerializer, TopicRetrieveSerializer, MyTopicSerializer, MyTopicAddSerializer
+from apps.users.models import MyTopic
 
 
 class DirectionView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
@@ -30,3 +32,27 @@ class CourseView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
 class TopicView(PrivateSONRendererMixin, RetrieveAPIView):
     queryset = Topic.objects.all()
     serializer_class = TopicRetrieveSerializer
+
+
+class MyTopicView(PrivateSONRendererMixin, ListCreateAPIView):
+    queryset = MyTopic.objects.all()
+    serializer_class = MyTopicSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer_input = {'data': request.data, 'context': {'request': request}}
+        serializer = MyTopicAddSerializer(**serializer_input)
+
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+        return Response({})
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        active = request.query_params.get('active', 'false').lower() == 'true'
+        if active:
+            queryset = self.get_queryset().filter(is_completed=False)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)

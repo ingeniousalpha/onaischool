@@ -2,7 +2,7 @@ from django.contrib import admin
 from localized_fields.admin import LocalizedFieldsAdminMixin
 
 from apps.analytics.models import Question, Quiz, AnswerOption, EntranceExam, EntranceExamSubject, ExamQuestion, \
-    ExamAnswerOption
+    ExamAnswerOption, EntranceExamPerDay
 
 
 class QuizInline(admin.StackedInline):
@@ -23,25 +23,31 @@ class AnswerOptionInline(admin.StackedInline):
     extra = 0
 
 
-class AssessmentInline(admin.StackedInline):
+class ExamInline(admin.StackedInline):
     model = EntranceExam
     fields = ('id', 'duration')
     extra = 0
 
 
-class AssessmentSubjectInline(admin.StackedInline):
+class ExamSubjectInline(admin.StackedInline):
     model = EntranceExamSubject
     fields = ('id', 'title', 'max_score', 'questions_amount')
     extra = 0
 
 
-class AssessmentQuestionInline(admin.StackedInline):
-    model = ExamQuestion
-    fields = ('id', 'title', 'image')
+class ExamPerDayInline(admin.StackedInline):
+    model = EntranceExamPerDay
+    fields = ('id', 'title', 'duration', 'passing_score')
     extra = 0
 
 
-class AssessmentAnswerOptionInline(admin.StackedInline):
+class ExamQuestionInline(admin.StackedInline):
+    model = ExamQuestion
+    fields = ('id', 'title', 'image', 'score')
+    extra = 0
+
+
+class ExamAnswerOptionInline(admin.StackedInline):
     model = ExamAnswerOption
     fields = ('id', 'text', 'image', 'is_correct')
     extra = 0
@@ -61,18 +67,17 @@ class QuestionAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
 
 
 @admin.register(EntranceExam)
-class AssessmentAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
-    ...
-    # inlines = [AssessmentSubjectInline]
+class EntranceExamAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
+    inlines = [ExamPerDayInline]
 
 
 @admin.register(EntranceExamSubject)
-class AssessmentSubjectAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
-    inlines = [AssessmentQuestionInline]
+class ExamSubjectAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
+    inlines = [ExamQuestionInline]
 
 
 @admin.register(ExamQuestion)
-class AssessmentQuestionAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
-    inlines = [AssessmentAnswerOptionInline]
+class ExamQuestionAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
+    inlines = [ExamAnswerOptionInline]
 
 

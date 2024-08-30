@@ -1,12 +1,13 @@
 from itertools import groupby
 
 from rest_framework import serializers
+from django.utils import timezone
 
 from apps.analytics.models import Quiz, Question, AnswerOption, EntranceExam, EntranceExamSubject, ExamQuestion, \
-    ExamAnswerOption
+    ExamAnswerOption, EntranceExamPerDay
 from apps.common.pagination import PaginationForQuestions
 from apps.common.serializers import AbstractImageSerializer, AbstractTitleSerializer
-from apps.users.models import UserExamQuestion
+from apps.users.models import UserExamQuestion, UserExamResult
 
 
 class ExamSubjectSerializer(AbstractTitleSerializer):
@@ -76,50 +77,58 @@ class ExamSubjectDetailSerializer(ExamSubjectSerializer):
         return result
 
 
+class ExamPerDaySerializer(AbstractTitleSerializer):
+    subjects = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EntranceExamPerDay
+        fields = ['id', 'title', 'duration', 'subjects']
+
+    def get_subjects(self, obj):
+        return ExamSubjectSerializer(obj.exam_subjects, many=True).data
+
+
+class ExamPerDayDetailSerializer(ExamPerDaySerializer):
+    subjects = serializers.SerializerMethodField()
+
+    class Meta(ExamPerDaySerializer.Meta):
+        model = EntranceExamPerDay
+        fields = ExamPerDaySerializer.Meta.fields
+
+    def get_subjects(self, obj):
+        return ExamSubjectDetailSerializer(obj.exam_subjects, many=True, context=self.context).data
+
+
 class EntranceExamSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
     exam_subjects = serializers.SerializerMethodField()
 
     class Meta:
         model = EntranceExam
-        fields = ['id', 'name', 'duration', 'exam_subjects']
+        fields = ['id', 'name', 'exam_subjects']
 
     def get_name(self, obj):
         return obj.direction.name.translate()
 
     def get_exam_subjects(self, obj):
-        exam_subjects = obj.exam_subjects.all()
-        grouped_by_days = groupby(exam_subjects, key=lambda c: c.day)
-        grouped_chapters_data = [
-            {
-                'day': key,
-                'subjects': ExamSubjectSerializer(list(groups), many=True, context=self.context).data
-            }
-            for key, groups in grouped_by_days
-        ]
-        return grouped_chapters_data
+        return ExamPerDaySerializer(obj.exam_per_day.all(), many=True).data
 
 
 class ExtranceExamDetailSerializer(EntranceExamSerializer):
+
     class Meta(EntranceExamSerializer.Meta):
         model = EntranceExam
         fields = EntranceExamSerializer.Meta.fields
 
     def get_exam_subjects(self, obj):
         request = self.context.get('request')
+        if not obj.user_exam_results.filter(user=request.user):
+            UserExamResult.objects.create(user=request.user,
+                                          entrance_exam=obj,
+                                          start_datetime=timezone.now())
         query_params = request.query_params
-        day = query_params.get('day', '1')
-        exam_subjects = obj.exam_subjects.all()
-        grouped_by_days = groupby(exam_subjects, key=lambda c: c.day)
-        grouped_chapters_data = []
-        for key, groups in grouped_by_days:
-            if key == day:
-                grouped_chapters_data.append({
-                    'day': key,
-                    'subjects': ExamSubjectDetailSerializer(list(groups), many=True, context=self.context).data
-                })
-
-        return grouped_chapters_data
+        day = query_params.get('day')
+        return ExamPerDayDetailSerializer(obj.exam_per_day.filter(id=day).all(), many=True, context=self.context).data
 
 
 class AnswersSerializer(AbstractImageSerializer):
@@ -193,3 +202,7 @@ class EntranceCheckAnswerSerializer(serializers.Serializer):
     question_id = serializers.IntegerField()
     options = serializers.ListSerializer(child=serializers.IntegerField(required=True))
 
+
+class FinishExamSerializer(serializers.Serializer):
+    exam_id = serializers.IntegerField()
+    day = serializers.IntegerField()

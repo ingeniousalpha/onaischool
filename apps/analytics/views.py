@@ -6,10 +6,11 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from django.utils import timezone
 
-from apps.analytics.exceptions import AnswerDoesntExists
+from apps.analytics.exceptions import AnswerDoesntExists, ExamNotFound
 from apps.analytics.models import Quiz, Question, AnswerOption, EntranceExam, ExamAnswerOption
 from apps.analytics.serializers import QuizSerializer, QuizQuestionsSerializer, QuizQuestionDetailSerializer, \
-    CheckAnswerSerializer, EntranceExamSerializer, ExtranceExamDetailSerializer, EntranceCheckAnswerSerializer
+    CheckAnswerSerializer, EntranceExamSerializer, ExtranceExamDetailSerializer, EntranceCheckAnswerSerializer, \
+    FinishExamSerializer
 from apps.common.mixins import PrivateSONRendererMixin
 from apps.users.models import UserQuizQuestion, UserExamQuestion
 
@@ -158,3 +159,36 @@ class EntranceExamCheckAnswerView(PrivateSONRendererMixin, APIView):
         uqq.save(update_fields=['is_correct'])
         return Response(data)
 
+
+class FinishEntranceExamView(PrivateSONRendererMixin, APIView):
+    serializer_class = FinishExamSerializer
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        serializer_data = FinishExamSerializer(request.data).data
+        entrance_exam = EntranceExam.objects.filter(id=serializer_data['exam_id']).first()
+        if not entrance_exam:
+            raise ExamNotFound
+        user_exam_result = user.user_exam_results.filter(entrance_exam_id=entrance_exam.id).first()
+        if not user_exam_result.end_datetime:
+            user_exam_result.end_datetime = timezone.now()
+        correct_question_count = 0
+        user_exam_questions = user.user_exam_questions.filter(
+            Q(entrance_exam_id=entrance_exam.id) and Q(is_correct=True))
+        for user_exam_question in user_exam_questions:
+            correct_question_count += user_exam_question.exam_question.score
+        passing_score = 0
+        exam_per_day = entrance_exam.exam_per_day.filter(id=serializer_data['day']).first()
+        if exam_per_day:
+            passing_score = exam_per_day.passing_score
+        user_exam_result.correct_score = correct_question_count
+        user_exam_result.save(update_fields=['end_datetime', 'correct_score'])
+        duration = user_exam_result.end_datetime - user_exam_result.start_datetime
+        duration_seconds = duration.total_seconds()
+        duration_minutes = duration_seconds / 60
+        resp_data = {
+            'score': correct_question_count,
+            'duration': round(duration_minutes, 2),
+            'passing_score': passing_score,
+        }
+        return Response(resp_data)

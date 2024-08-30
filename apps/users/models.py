@@ -11,7 +11,7 @@ from .managers import UserManager
 from .. import Grades, Roles
 from ..analytics.models import Question, AnswerOption, Quiz, EntranceExam, ExamQuestion, ExamAnswerOption
 from ..common.models import TimestampModel
-from ..content.models import School, Course
+from ..content.models import School, Course, Topic
 
 
 class User(PermissionsMixin, AbstractBaseUser):
@@ -95,11 +95,17 @@ class User(PermissionsMixin, AbstractBaseUser):
 
 
 class MyTopic(TimestampModel):
-    user = models.ForeignKey(User, verbose_name="Пользователь",
-                             on_delete=models.CASCADE, null=True, blank=True, related_name="my_topics")
-
-    course = models.ForeignKey(Course, verbose_name="Курс",
-                              on_delete=models.CASCADE, null=True, blank=True, related_name="my_topics")
+    user = models.ForeignKey(
+        User,
+        verbose_name="Пользователь",
+        on_delete=models.CASCADE,
+        null=True, blank=True, related_name="my_topics")
+    topic = models.ForeignKey(
+        Topic,
+        on_delete=models.CASCADE,
+        related_name="my_topics"
+    )
+    is_completed = models.BooleanField(default=False)
 
 
 class UserQuizQuestion(TimestampModel):
@@ -134,6 +140,13 @@ class UserQuizQuestion(TimestampModel):
 
 
 class UserExamQuestion(TimestampModel):
+    entrance_exam = models.ForeignKey(
+        EntranceExam,
+        on_delete=models.CASCADE,
+        related_name='user_exam_questions',
+        null=True,
+        blank=True
+    )
     exam_question = models.ForeignKey(
         ExamQuestion,
         on_delete=models.CASCADE,
@@ -156,3 +169,23 @@ class UserExamQuestion(TimestampModel):
 
     class Meta:
         ordering = ['id']
+
+
+class UserExamResult(TimestampModel):
+    entrance_exam = models.ForeignKey(
+        EntranceExam,
+        verbose_name="Выступительный тест",
+        on_delete=models.CASCADE,
+        related_name="user_exam_results",
+    )
+    user = models.ForeignKey(
+        User,
+        verbose_name="Пользователь",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="user_exam_results")
+    start_datetime = models.DateTimeField(_("Время начала"), auto_now_add=True, db_index=True)
+    end_datetime = models.DateTimeField(null=True, blank=True, verbose_name='Время окончания')
+    correct_score = models.IntegerField(default=0)
+

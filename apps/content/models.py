@@ -25,6 +25,7 @@ class Direction(PriorityModel, AbstractRequiredNameModel, AbstractRequiredDescri
         null=True,
         blank=True,
     )
+    enable_all = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = _("Direction")

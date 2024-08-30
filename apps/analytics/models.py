@@ -157,19 +157,28 @@ class EntranceExam(models.Model):
         return self.direction.name.ru
 
 
-class EntranceExamSubject(AbstractTitleModel):
-
-    max_score = models.IntegerField(verbose_name="Максимальное количество баллов")
-    questions_amount = models.IntegerField(verbose_name="Количество вопросов")
-    day = models.CharField(
-        max_length=100,
-        choices=AssessmentDays.choices,
-        default=AssessmentDays.first,
-        verbose_name='Какой день'
-    )
+class EntranceExamPerDay(AbstractTitleModel):
+    passing_score = models.IntegerField(verbose_name="Проходной балл")
+    duration = models.IntegerField(verbose_name="Длительность", default=0)
     exam = models.ForeignKey(
         EntranceExam,
         verbose_name="Выступительный тест",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='exam_per_day'
+    )
+
+    def __str__(self):
+        return f'{self.exam.direction.name.ru} {self.title.ru}'
+
+
+class EntranceExamSubject(AbstractTitleModel):
+    max_score = models.IntegerField(verbose_name="Максимальное количество баллов")
+    questions_amount = models.IntegerField(verbose_name="Количество вопросов")
+    exam_per_day = models.ForeignKey(
+        EntranceExamPerDay,
+        verbose_name="День",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -197,6 +206,7 @@ class ExamQuestion(AbstractTitleModel):
         blank=True,
         related_name='exam_questions'
     )
+    score = models.IntegerField(default=1)
 
     class Meta:
         verbose_name = _("Вопрос (Вступительный тест)")
