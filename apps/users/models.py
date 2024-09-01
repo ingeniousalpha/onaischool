@@ -9,7 +9,8 @@ from config.settings import Languages
 from .managers import UserManager
 
 from .. import Grades, Roles
-from ..analytics.models import Question, AnswerOption, Quiz, EntranceExam, ExamQuestion, ExamAnswerOption
+from ..analytics.models import Question, AnswerOption, Quiz, EntranceExam, ExamQuestion, ExamAnswerOption, \
+    EntranceExamPerDay
 from ..common.models import TimestampModel
 from ..content.models import School, Course, Topic
 
@@ -50,6 +51,20 @@ class User(PermissionsMixin, AbstractBaseUser):
     avatar_image = models.ImageField(null=True, blank=True)
     created_at = models.DateTimeField(_("Создан"), default=timezone.now)
     updated_at = models.DateTimeField(_("Обновлен"), auto_now=True)
+    current_topic = models.ForeignKey(
+        Topic,
+        on_delete=models.CASCADE,
+        related_name="users",
+        null=True,
+        blank=True
+    )
+    current_exam_per_day = models.ForeignKey(
+        EntranceExamPerDay,
+        on_delete=models.CASCADE,
+        related_name="users",
+        null=True,
+        blank=True
+    )
 
     USERNAME_FIELD = "email"
     objects = UserManager()
@@ -188,4 +203,3 @@ class UserExamResult(TimestampModel):
     start_datetime = models.DateTimeField(_("Время начала"), auto_now_add=True, db_index=True)
     end_datetime = models.DateTimeField(null=True, blank=True, verbose_name='Время окончания')
     correct_score = models.IntegerField(default=0)
-

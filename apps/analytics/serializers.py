@@ -77,6 +77,18 @@ class ExamSubjectDetailSerializer(ExamSubjectSerializer):
         return result
 
 
+class ExamPerDayForMainPageSerializer(AbstractTitleSerializer):
+    subjects = serializers.SerializerMethodField()
+    entrance_exam_id = serializers.IntegerField(source="exam.id")
+
+    class Meta:
+        model = EntranceExamPerDay
+        fields = ['id', 'entrance_exam_id', 'title', 'duration', 'subjects']
+
+    def get_subjects(self, obj):
+        return ExamSubjectSerializer(obj.exam_subjects, many=True).data
+
+
 class ExamPerDaySerializer(AbstractTitleSerializer):
     subjects = serializers.SerializerMethodField()
 
@@ -122,12 +134,17 @@ class ExtranceExamDetailSerializer(EntranceExamSerializer):
 
     def get_exam_subjects(self, obj):
         request = self.context.get('request')
-        if not obj.user_exam_results.filter(user=request.user):
-            UserExamResult.objects.create(user=request.user,
+        user = request.user
+        if not obj.user_exam_results.filter(user=user):
+            UserExamResult.objects.create(user=user,
                                           entrance_exam=obj,
                                           start_datetime=timezone.now())
         query_params = request.query_params
         day = query_params.get('day')
+
+        user.current_exam_per_day = EntranceExamPerDay.objects.filter(id=day).first()
+        user.save(update_fields=['current_exam_per_day'])
+
         return ExamPerDayDetailSerializer(obj.exam_per_day.filter(id=day).all(), many=True, context=self.context).data
 
 
