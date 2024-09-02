@@ -189,7 +189,8 @@ class QuizQuestionsSerializer(AbstractTitleSerializer, AbstractImageSerializer, 
         user = self.user
         if obj.type == QuestionType.open_answer:
             if obj.user_quiz_questions.filter(user=user).exists():
-                return obj.user_quiz_questions.filter(user=user).first().answers.first().text.translate()
+                if obj.user_quiz_questions.filter(user=user).first().answers.exists():
+                    return obj.user_quiz_questions.filter(user=user).first().answers.first().text.translate()
 
 
 class QuizQuestionDetailSerializer(QuizQuestionsSerializer):
