@@ -13,6 +13,7 @@ class TestType(models.TextChoices):
 
 class QuestionType(models.TextChoices):
     one_choice = ('one_choice', 'Выбрать один')
+    open_answer = ('open_answer', 'Open answer')
     multiple_choice = ('multiple_choice', 'Выбрать несколько')
 
 

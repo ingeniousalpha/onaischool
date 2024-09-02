@@ -4,7 +4,8 @@ from rest_framework import serializers
 from django.utils import timezone
 
 from apps.analytics.models import Quiz, Question, AnswerOption, EntranceExam, EntranceExamSubject, ExamQuestion, \
-    ExamAnswerOption, EntranceExamPerDay
+    ExamAnswerOption, EntranceExamPerDay, QuestionType
+from apps.common.mixins import UserPropertyMixin
 from apps.common.pagination import PaginationForQuestions
 from apps.common.serializers import AbstractImageSerializer, AbstractTitleSerializer
 from apps.users.models import UserExamQuestion, UserExamResult
@@ -148,7 +149,7 @@ class ExtranceExamDetailSerializer(EntranceExamSerializer):
         return ExamPerDayDetailSerializer(obj.exam_per_day.filter(id=day).all(), many=True, context=self.context).data
 
 
-class AnswersSerializer(AbstractImageSerializer):
+class AnswersSerializer(AbstractImageSerializer, UserPropertyMixin):
     text = serializers.SerializerMethodField()
     selected = serializers.SerializerMethodField()
 
@@ -160,25 +161,35 @@ class AnswersSerializer(AbstractImageSerializer):
         return obj.text.translate()
 
     def get_selected(self, obj):
-        user = self.context.get('request').user
+        user = self.user
         if user.is_authenticated:
             return obj.user_quiz_questions.filter(user=user).exists()
         return False
 
 
-class QuizQuestionsSerializer(AbstractTitleSerializer, AbstractImageSerializer):
+class QuizQuestionsSerializer(AbstractTitleSerializer, AbstractImageSerializer, UserPropertyMixin):
     explain_video = serializers.SerializerMethodField()
     answers = serializers.SerializerMethodField()
+    answer_text = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
-        fields = ['id', 'title', 'image', 'explain_video', 'type', 'answers']
+        fields = ['id', 'title', 'image', 'explain_video', 'type', 'answers', 'answer_text']
 
     def get_explain_video(self, obj):
         return obj.explain_video.translate()
 
     def get_answers(self, obj):
+        if obj.type == QuestionType.open_answer:
+            return []
+
         return AnswersSerializer(obj.answer_options, many=True, context=self.context).data
+
+    def get_answer_text(self, obj):
+        user = self.user
+        if obj.type == QuestionType.open_answer:
+            if obj.user_quiz_questions.filter(user=user).exists():
+                return obj.user_quiz_questions.filter(user=user).first().answers.first().text.translate()
 
 
 class QuizQuestionDetailSerializer(QuizQuestionsSerializer):
@@ -212,7 +223,8 @@ class QuizSerializer(serializers.ModelSerializer):
 
 class CheckAnswerSerializer(serializers.Serializer):
     question_id = serializers.IntegerField()
-    options = serializers.ListSerializer(child=serializers.IntegerField(required=True))
+    answer = serializers.CharField(required=False)
+    options = serializers.ListSerializer(child=serializers.IntegerField(required=False), required=False)
 
 
 class EntranceCheckAnswerSerializer(serializers.Serializer):

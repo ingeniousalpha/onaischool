@@ -7,7 +7,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from django.utils import timezone
 
 from apps.analytics.exceptions import AnswerDoesntExists, ExamNotFound
-from apps.analytics.models import Quiz, Question, AnswerOption, EntranceExam, ExamAnswerOption
+from apps.analytics.models import Quiz, Question, AnswerOption, EntranceExam, ExamAnswerOption, QuestionType
 from apps.analytics.serializers import QuizSerializer, QuizQuestionsSerializer, QuizQuestionDetailSerializer, \
     CheckAnswerSerializer, EntranceExamSerializer, ExtranceExamDetailSerializer, EntranceCheckAnswerSerializer, \
     FinishExamSerializer
@@ -87,33 +87,53 @@ class CheckAnswerView(PrivateSONRendererMixin, APIView):
 
         options = serializer_data.get('options', [])
         question_id = serializer_data.get('question_id')
+        open_answer = serializer_data.get('answer', None)
 
-        if not options:
+        if not options and not open_answer:
             return Response({'error': 'No options provided'}, status=400)
 
         answers = AnswerOption.objects.filter(
-            id__in=options,
-            question_id=question_id
+            Q(id__in=options,
+              question_id=question_id)
+            |
+            Q(question_id=question_id,
+              question__type=QuestionType.open_answer)
         )
         if not answers.exists():
             raise AnswerDoesntExists
         data = []
-        is_correct = True
         uqq = UserQuizQuestion.objects.filter(user=user, question_id=question_id).first()
         if uqq:
             uqq.answers.clear()
+        is_correct = True
+        correct_answer_count = 0
         for answer in answers:
-            uqq.answers.add(answer.id)
-            if not answer.is_correct:
-                is_correct = False
-            uqq.updated_at = timezone.now()
-            uqq.save(update_fields=['updated_at'])
+            is_correct = True
+            if answer.question.type == QuestionType.open_answer:
+                if not open_answer:
+                    is_correct = False
+
+                elif answer.text.ru.lower() == open_answer.lower():
+                    uqq.answers.add(answer.id)
+                    uqq.is_correct = True
+                else:
+                    is_correct = False
+            else:
+                uqq.answers.add(answer.id)
+                if not answer.is_correct:
+                    is_correct = False
+                uqq.updated_at = timezone.now()
+                uqq.save(update_fields=['updated_at'])
             data.append({
                     'answer_id': answer.id,
-                    'is_correct': answer.is_correct,
+                    'answer_text': open_answer,
+                    'is_correct': is_correct,
                     'life_count': 4
             })
-        uqq.is_correct = is_correct
+            if is_correct:
+                correct_answer_count += 1
+        if answers.count() == correct_answer_count:
+            uqq.is_correct = is_correct
         uqq.save(update_fields=['is_correct'])
         return Response(data)
 

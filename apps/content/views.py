@@ -1,4 +1,4 @@
-from rest_framework.generics import ListAPIView, RetrieveAPIView, ListCreateAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView, ListCreateAPIView, DestroyAPIView
 from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
@@ -47,7 +47,7 @@ class TopicView(PrivateSONRendererMixin, RetrieveAPIView):
         return Response(serializer.data)
 
 
-class MyTopicView(PrivateSONRendererMixin, ListCreateAPIView):
+class MyTopicView(PrivateSONRendererMixin, ListCreateAPIView, DestroyAPIView):
     queryset = MyTopic.objects.all()
     serializer_class = MyTopicSerializer
 
@@ -62,10 +62,20 @@ class MyTopicView(PrivateSONRendererMixin, ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         active = request.query_params.get('active', 'false').lower() == 'true'
+        print(active)
         if active:
             queryset = self.get_queryset().filter(is_completed=False)
-
+        else:
+            queryset = self.get_queryset().filter(is_completed=True)
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
+
+    def delete(self, request, *args, **kwargs):
+        data = self.request.data
+        user = self.request.user
+        my_topic = MyTopic.objects.filter(topic=data['topic'], user=user).first()
+        if my_topic:
+            my_topic.delete()
+        return Response(data={}, status=204)

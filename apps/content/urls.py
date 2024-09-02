@@ -10,7 +10,7 @@ from .views import (
 
 urlpatterns = [
     path('topic/<int:pk>', TopicView.as_view()),
-    path('my-topics', MyTopicView.as_view(), name='my-topics')
+    path('my-topics/', MyTopicView.as_view(), name='my-topics'),
 ]
 
 router = DefaultRouter()
