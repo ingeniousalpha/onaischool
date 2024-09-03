@@ -36,17 +36,39 @@ class TopicRetrieveSerializer(TopicSerializer, AbstractDescriptionSerializer):
         return obj.video_link.translate()
 
 
+class DirectionWithNameSerializer(AbstractNameSerializer):
+
+    class Meta:
+        model = Direction
+        fields = ['id', 'name']
+
+
+class SubjectForMyCourseSerializer(AbstractNameSerializer):
+    direction = DirectionWithNameSerializer()
+
+    class Meta:
+        model = Subject
+        fields = ['id', 'name', 'direction']
+
+
+class CourseWithNameSerializer(AbstractNameSerializer):
+    subject = SubjectForMyCourseSerializer()
+
+    class Meta:
+        model = Course
+        fields = ['id', 'name', 'grade', 'subject']
+
+
 class TopicSerializerWithSubject(TopicSerializer, UserPropertyMixin):
-    subject_info = serializers.SerializerMethodField()
+    course_info = serializers.SerializerMethodField()
     quiz_completion = serializers.SerializerMethodField()
 
     class Meta(TopicSerializer.Meta):
-        fields = TopicSerializer.Meta.fields + ['subject_info', 'quiz_completion']
+        fields = TopicSerializer.Meta.fields + ['course_info', 'quiz_completion']
 
-    def get_subject_info(self, obj):
+    def get_course_info(self, obj):
         course = obj.chapter.course
-        direction_name = course.subject.direction.name.translate()
-        return f"{course.subject.name.translate()} {direction_name} {course.grade}кл "
+        return CourseWithNameSerializer(course, context=self.context).data
 
     def get_quiz_completion(self, obj):
         quizzes = obj.quizzes.all()
