@@ -62,7 +62,6 @@ class MyTopicView(PrivateSONRendererMixin, ListCreateAPIView, DestroyAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         active = request.query_params.get('active', 'false').lower() == 'true'
-        print(active)
         if active:
             queryset = self.get_queryset().filter(is_completed=False)
         else:

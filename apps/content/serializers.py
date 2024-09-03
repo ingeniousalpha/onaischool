@@ -184,17 +184,19 @@ class MyTopicAddSerializer(serializers.ModelSerializer, UserPropertyMixin):
 
     def create(self, validated_data):
         topic = validated_data['topic']
+        print(topic.id)
         quizzes = topic.quizzes.all()
         completed = False
         if quizzes:
             quiz = quizzes.first()
-            questions_amount = quiz.questions_amount
-            answered_count = self.user.user_quiz_questions.filter(Q(answers__isnull=False)
-                                                                  & Q(quiz_id=quiz.id)).count()
-            if questions_amount == answered_count:
-                completed = True
+            if quiz:
+                questions_amount = quiz.questions_amount
+                answered_count = self.user.user_quiz_questions.filter(
+                    Q(answers__isnull=False) & Q(quiz_id=quiz.id)).count()
+                completed = (questions_amount == answered_count)
 
-        instance, created = MyTopic.objects.get_or_create(user=self.user, topic=topic,
-                                                          defaults={'is_completed': completed})
+        instance, created = MyTopic.objects.update_or_create(user=self.user, course__id=topic.chapter.course.id,
+                                                             defaults={'is_completed': completed,
+                                                                       'topic_id': topic.id})
 
         return instance

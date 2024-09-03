@@ -115,12 +115,22 @@ class MyTopic(TimestampModel):
         verbose_name="Пользователь",
         on_delete=models.CASCADE,
         null=True, blank=True, related_name="my_topics")
+
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="my_topic")
     topic = models.ForeignKey(
         Topic,
         on_delete=models.CASCADE,
         related_name="my_topics"
     )
     is_completed = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
 
 
 class UserQuizQuestion(TimestampModel):
