@@ -67,8 +67,8 @@ class ExamSubjectDetailSerializer(ExamSubjectSerializer):
                                   :obj.questions_amount - user_exam_questions.count()]
             for question in questions_to_create:
                 UserExamQuestion.objects.get_or_create(
-                    exam_question=question.id,
-                    user=user,
+                    exam_question_id=question.id,
+                    user=user
                 )
             questions = list(user_exam_questions.values_list('exam_question', flat=True)) + list(questions_to_create)
 
@@ -106,7 +106,7 @@ class ExamPerDayDetailSerializer(ExamPerDaySerializer):
 
     class Meta(ExamPerDaySerializer.Meta):
         model = EntranceExamPerDay
-        fields = ExamPerDaySerializer.Meta.fields
+        fields = ExamPerDaySerializer.Meta.fields + ['subjects']
 
     def get_subjects(self, obj):
         return ExamSubjectDetailSerializer(obj.exam_subjects, many=True, context=self.context).data
