@@ -212,6 +212,7 @@ class ExamQuestion(AbstractTitleModel):
     class Meta:
         verbose_name = _("Вопрос (Вступительный тест)")
         verbose_name_plural = _("Вопросы (Вступительный тест)")
+        ordering = ['score']
 
 
 class ExamAnswerOption(AbstractOption):

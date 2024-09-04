@@ -203,6 +203,13 @@ class UserExamResult(TimestampModel):
         on_delete=models.CASCADE,
         related_name="user_exam_results",
     )
+    exam_per_day = models.ForeignKey(
+        EntranceExamPerDay,
+        verbose_name="Выступительный тест по дням",
+        on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name="user_exam_results",
+    )
     user = models.ForeignKey(
         User,
         verbose_name="Пользователь",
@@ -213,3 +220,6 @@ class UserExamResult(TimestampModel):
     start_datetime = models.DateTimeField(_("Время начала"), auto_now_add=True, db_index=True)
     end_datetime = models.DateTimeField(null=True, blank=True, verbose_name='Время окончания')
     correct_score = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ['-created_at']

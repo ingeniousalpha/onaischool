@@ -71,8 +71,8 @@ class ExamSubjectDetailSerializer(ExamSubjectSerializer):
                     user=user
                 )
             questions = list(user_exam_questions.values_list('exam_question', flat=True)) + list(questions_to_create)
-
-        paginated_data = paginator.paginate_queryset(queryset=obj.exam_questions.filter(id__in=questions), request=request)
+        paginated_data = paginator.paginate_queryset(queryset=obj.exam_questions.filter(id__in=questions),
+                                                     request=request)
         serializer = ExamQuestionSerializer(paginated_data, many=True, context=self.context)
         result = paginator.get_paginated_response(serializer.data)
         return result
@@ -80,14 +80,18 @@ class ExamSubjectDetailSerializer(ExamSubjectSerializer):
 
 class ExamPerDayForMainPageSerializer(AbstractTitleSerializer):
     subjects = serializers.SerializerMethodField()
+    direction_name = serializers.SerializerMethodField()
     entrance_exam_id = serializers.IntegerField(source="exam.id")
 
     class Meta:
         model = EntranceExamPerDay
-        fields = ['id', 'entrance_exam_id', 'title', 'duration', 'subjects']
+        fields = ['id', 'entrance_exam_id', 'title', 'duration', 'subjects', 'direction_name']
 
     def get_subjects(self, obj):
         return ExamSubjectSerializer(obj.exam_subjects, many=True).data
+
+    def get_direction_name(self, obj):
+        return obj.exam.direction.name.translate()
 
 
 class ExamPerDaySerializer(AbstractTitleSerializer):
@@ -128,25 +132,32 @@ class EntranceExamSerializer(serializers.ModelSerializer):
 
 
 class ExtranceExamDetailSerializer(EntranceExamSerializer):
+    next_subjects = serializers.SerializerMethodField()
 
     class Meta(EntranceExamSerializer.Meta):
         model = EntranceExam
-        fields = EntranceExamSerializer.Meta.fields
+        fields = EntranceExamSerializer.Meta.fields + ['next_subjects']
 
     def get_exam_subjects(self, obj):
         request = self.context.get('request')
         user = request.user
-        if not obj.user_exam_results.filter(user=user):
-            UserExamResult.objects.create(user=user,
-                                          entrance_exam=obj,
-                                          start_datetime=timezone.now())
         query_params = request.query_params
         day = query_params.get('day')
-
-        user.current_exam_per_day = EntranceExamPerDay.objects.filter(id=day).first()
+        exam_per_day = EntranceExamPerDay.objects.filter(id=day).first()
+        user.current_exam_per_day = exam_per_day
+        if not obj.user_exam_results.filter(user=user, exam_per_day=exam_per_day).exists():
+            UserExamResult.objects.create(user=user,
+                                          exam_per_day=exam_per_day,
+                                          entrance_exam=obj,
+                                          start_datetime=timezone.now())
         user.save(update_fields=['current_exam_per_day'])
-
         return ExamPerDayDetailSerializer(obj.exam_per_day.filter(id=day).all(), many=True, context=self.context).data
+
+    def get_next_subjects(self, obj):
+        request = self.context.get('request')
+        user = request.user
+        exam_per_days = obj.exam_per_day.exclude(id__in=user.user_exam_results.values_list('exam_per_day', flat=True))
+        return ExamPerDaySerializer(exam_per_days, many=True).data
 
 
 class AnswersSerializer(AbstractImageSerializer, UserPropertyMixin):

@@ -184,7 +184,6 @@ class MyTopicAddSerializer(serializers.ModelSerializer, UserPropertyMixin):
 
     def create(self, validated_data):
         topic = validated_data['topic']
-        print(topic.id)
         quizzes = topic.quizzes.all()
         completed = False
         if quizzes:
