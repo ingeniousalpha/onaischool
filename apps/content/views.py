@@ -36,13 +36,8 @@ class TopicView(PrivateSONRendererMixin, RetrieveAPIView):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         user = request.user
-        if user.current_topic is None:
-            user.current_topic = instance
-            user.save(update_fields=['current_topic'])
-        else:
-            if user.current_topic.priority < instance.priority:
-                user.current_topic = instance
-                user.save(update_fields=['current_topic'])
+        user.current_topic = instance
+        user.save(update_fields=['current_topic'])
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
