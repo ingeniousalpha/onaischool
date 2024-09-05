@@ -55,12 +55,12 @@ class MyTopicView(PrivateSONRendererMixin, ListCreateAPIView, DestroyAPIView):
         return Response({})
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
+        queryset = self.get_queryset().filter(user=self.request.user)
         active = request.query_params.get('active', 'false').lower() == 'true'
         if active:
-            queryset = self.get_queryset().filter(is_completed=False)
+            queryset = queryset.filter(is_completed=False)
         else:
-            queryset = self.get_queryset().filter(is_completed=True)
+            queryset = queryset.filter(is_completed=True)
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -69,7 +69,7 @@ class MyTopicView(PrivateSONRendererMixin, ListCreateAPIView, DestroyAPIView):
     def delete(self, request, *args, **kwargs):
         data = self.request.data
         user = self.request.user
-        my_topic = MyTopic.objects.filter(topic=data['topic'], user=user).first()
+        my_topic = MyTopic.objects.filter(topic_id=data['topic'], user=user).first()
         if my_topic:
             my_topic.delete()
         return Response(data={}, status=204)
