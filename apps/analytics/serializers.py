@@ -70,9 +70,12 @@ class ExamSubjectDetailSerializer(ExamSubjectSerializer):
                     exam_question_id=question.id,
                     user=user
                 )
-            questions = list(user_exam_questions.values_list('exam_question', flat=True)) + list(questions_to_create)
-        paginated_data = paginator.paginate_queryset(queryset=obj.exam_questions.filter(id__in=questions),
-                                                     request=request)
+            questions = (list(user_exam_questions.values_list('exam_question', flat=True)) +
+                         list(questions_to_create.values_list('id', flat=True)))
+        paginated_data = paginator.paginate_queryset(
+            request=request,
+            queryset=obj.exam_questions.filter(id__in=questions),
+        )
         serializer = ExamQuestionSerializer(paginated_data, many=True, context=self.context)
         result = paginator.get_paginated_response(serializer.data)
         return result
