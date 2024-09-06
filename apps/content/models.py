@@ -46,7 +46,9 @@ class Subject(PriorityModel, AbstractRequiredNameModel):
         ordering = ['priority']
 
     def __str__(self):
-        return f'{self.direction.name.ru} {self.name.ru}'
+        if self.direction:
+            return f'{self.direction.name.ru} {self.name.ru}'
+        return f"Subject {self.name.ru}"
 
 
 class Course(PriorityModel, AbstractRequiredNameModel):
