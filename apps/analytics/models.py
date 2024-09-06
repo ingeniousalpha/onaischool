@@ -155,7 +155,9 @@ class EntranceExam(models.Model):
         verbose_name_plural = _("Вступительные тесты")
 
     def __str__(self):
-        return self.direction.name.ru
+        if self.direction:
+            return self.direction.name.ru
+        return str(self.id)
 
 
 class EntranceExamPerDay(AbstractTitleModel):

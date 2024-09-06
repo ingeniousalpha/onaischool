@@ -128,7 +128,9 @@ class EntranceExamSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'exam_subjects']
 
     def get_name(self, obj):
-        return obj.direction.name.translate()
+        if obj.direction:
+            return obj.direction.name.translate()
+        return ''
 
     def get_exam_subjects(self, obj):
         return ExamPerDaySerializer(obj.exam_per_day.all(), many=True).data

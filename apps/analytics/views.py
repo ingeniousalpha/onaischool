@@ -20,6 +20,9 @@ class EntranceExamView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
     serializer_class = EntranceExamSerializer
     pagination_class = None
 
+    def get_queryset(self):
+        return super().get_queryset().filter(direction__isnull=False)
+
     def get_serializer_class(self):
         if self.action == "retrieve":
             return ExtranceExamDetailSerializer
