@@ -67,9 +67,8 @@ class TopicSerializerWithSubject(TopicSerializer, UserPropertyMixin):
         fields = TopicSerializer.Meta.fields + ['course_info', 'quiz_completion']
 
     def get_course_info(self, obj):
-        if obj.chapter is not None:
+        if obj.chapter:
             course = obj.chapter.course
-
             return CourseWithNameSerializer(course, context=self.context).data
 
     def get_quiz_completion(self, obj):
