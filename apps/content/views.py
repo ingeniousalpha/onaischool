@@ -1,3 +1,6 @@
+from itertools import groupby
+
+from django.db.models import Q
 from rest_framework.generics import ListAPIView, RetrieveAPIView, ListCreateAPIView, DestroyAPIView
 from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
@@ -55,6 +58,18 @@ class MyTopicView(PrivateSONRendererMixin, ListCreateAPIView, DestroyAPIView):
         return Response({})
 
     def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        my_course_ids = queryset.values_list('topic_id', flat=True)
+        new_topics = Topic.objects.filter(
+            Q(chapter__course__subject__direction__enable_all=True) & ~Q(id__in=my_course_ids)
+        ).all()
+        grouped_topics = groupby(sorted(new_topics, key=lambda t: t.chapter.course_id),
+                                 key=lambda t: t.chapter.course_id)
+        first_topics = [next(topics) for course_id, topics in grouped_topics]
+        for topic in first_topics:
+            MyTopic.objects.create(user=request.user, topic=topic,
+                                   course=topic.chapter.course)
+
         queryset = self.get_queryset().filter(user=self.request.user)
         active = request.query_params.get('active', 'false').lower() == 'true'
         if active:
