@@ -62,7 +62,7 @@ class QuizAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
 class QuestionAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     fields = ('title', 'image', 'quiz', 'type', 'explain_video')
     list_display = ('id', 'title', 'quiz',)
-    # list_filter = ('quiz',)
+    list_filter = ('quiz',)
     inlines = [AnswerOptionInline]
 
 

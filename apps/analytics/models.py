@@ -108,7 +108,7 @@ class Question(AbstractTitleModel):
         ordering = ['id']
 
     def __str__(self):
-        return self.id
+        return str(self.id)
 
 
 class AbstractOption(models.Model):
