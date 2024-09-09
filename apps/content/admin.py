@@ -55,9 +55,9 @@ class TopicAdminForm(forms.ModelForm):
         ]
 
         # Check if all required columns are present
-        missing_columns = [col for col in required_columns if col not in df.columns]
-        if missing_columns:
-            raise ValidationError(f"Missing columns in the uploaded file: {', '.join(missing_columns)}")
+        # missing_columns = [col for col in required_columns if col not in df.columns]
+        # if missing_columns:
+        #     raise ValidationError(f"Missing columns in the uploaded file: {', '.join(missing_columns)}")
 
         # Further validation: Check for required fields
         # if df[required_columns].isnull().any().any():
