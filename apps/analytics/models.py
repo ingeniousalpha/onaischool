@@ -107,6 +107,9 @@ class Question(AbstractTitleModel):
         verbose_name_plural = _("Вопросы")
         ordering = ['id']
 
+    def __str__(self):
+        return self.id
+
 
 class AbstractOption(models.Model):
     text = LocalizedTextField(
