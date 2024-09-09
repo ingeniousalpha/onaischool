@@ -60,6 +60,7 @@ class Quiz(models.Model):
     def __str__(self):
         if self.topic:
             return f'{self.get_type_display()} {self.topic.name.ru}'
+        return str(self.id)
 
 
 class Question(AbstractTitleModel):
