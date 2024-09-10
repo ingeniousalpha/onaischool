@@ -170,14 +170,14 @@ class EntranceExamPerDay(AbstractTitleModel):
     exam = models.ForeignKey(
         EntranceExam,
         verbose_name="Выступительный тест",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        on_delete=models.CASCADE,
         related_name='exam_per_day'
     )
 
     def __str__(self):
-        return f'{self.exam.direction.name.ru} {self.title.ru}'
+        if self.exam:
+            return f'{self.exam.direction.name.ru} {self.title.ru}'
+        return ''
 
 
 class EntranceExamSubject(AbstractTitleModel):
