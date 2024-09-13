@@ -7,7 +7,9 @@ class LanguageHeaderMiddleware(object):
         self.get_response = get_response
 
     def __call__(self, request):
-        return self.process_request(request)
+        response = self.get_response(request)
+        response['HTTP_LANGUAGE'] = 'ru'
+        return response
 
     def process_request(self, request):
         language = request.META.get('HTTP_LANGUAGE')
