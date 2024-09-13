@@ -10,7 +10,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>SB Admin 2 - Dashboard</title>
+    <title>Onai School Dashboard</title>
 
     <!-- Custom fonts for this template-->
     <link href="{% static 'vendor/fontawesome-free/css/all.min.css' %}" rel="stylesheet" type="text/css">
@@ -26,6 +26,38 @@
             font-size: 18pt;
             color: white;
             padding: 8px 28px;
+        }
+        .container {
+            color: black;
+            overflow: auto;
+            padding: 0;
+            max-width: inherit !important;
+        }
+        .table {
+            color: black;
+        }
+        .title {
+            margin-bottom: 24px;
+        }
+        .title h1 {
+            display: inline-block;
+            color: black;
+            margin-right: 10px;
+        }
+        .title select {
+            display: inline-block;
+            padding: 10px;
+            font-size: 14pt;
+            border: 2px solid #4e73df !important;
+            border-radius: 7px;
+        }
+        .loader {
+            display: none;
+            padding: 10px;
+        }
+        .content-block {
+            padding-top: 20px;
+            margin-bottom: 50px;
         }
     </style>
 
@@ -43,8 +75,8 @@
             <div id="content">
 
                 <!-- Topbar -->
-                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow" id="topbar">
-                    Gamer Pro Dashboard
+                <nav class="navbar navbar-expand navbar-light bg-white topbar static-top shadow" id="topbar">
+                    Onai School Dashboard
                 </nav>
                 <!-- End of Topbar -->
 
@@ -52,115 +84,105 @@
                 <div class="container-fluid">
 
                     <!-- Content Row -->
-                    <div class="row">
+                    <div class="content-block" id="block1">
+                        <div class="title">
+                            <h1>Метрики за</h1>
+                            <select name="period" class="period_select" onchange="location = this.value;">
+                                <option value="?period=today#block1" {% if period == "today" %}selected{% endif %}>Сегодня</option>
+                                <option value="?period=last_week#block1" {% if period == "last_week" %}selected{% endif %}>Последнюю неделю</option>
+                                <option value="?period=last_month#block1" {% if period == "last_month" %}selected{% endif %}>Последний месяц</option>
+                                <option value="?period=last_year#block1" {% if period == "last_year" %}selected{% endif %}>Последний год</option>
+                            </select>
+                            <div class="loader"><div class="spinner-border text-primary" role="status"></div></div>
+                        </div>
+                        <div class="row">
 
-                        <!-- Earnings (Monthly) Card Example -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-primary shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                                Всего броней</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{bookings_count_total}}</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                            <!-- Earnings (Monthly) Card Example -->
+
+                            <div class="col-xl-3 col-md-6 mb-4">
+                                <div class="card border-left-primary shadow h-100 py-2">
+                                    <div class="card-body">
+                                        <div class="row no-gutters align-items-center">
+                                            <div class="col mr-2">
+                                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                    Всего новых пользователей</div>
+                                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{users_count_total}}</div>
+                                            </div>
+                                            <div class="col-auto">
+                                                <i class="fas fa-user fa-2x text-gray-300"></i>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-primary shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                                Сегодня броней</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{bookings_count_today}}</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                            <div class="col-xl-3 col-md-6 mb-4">
+                                <div class="card border-left-primary shadow h-100 py-2">
+                                    <div class="card-body">
+                                        <div class="row no-gutters align-items-center">
+                                            <div class="col mr-2">
+                                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                    Всего новых студентов</div>
+                                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{students_count_total}}</div>
+                                            </div>
+                                            <div class="col-auto">
+                                                <i class="fas fa-user fa-2x text-gray-300"></i>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Earnings (Monthly) Card Example -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-success shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                                Сумма за сегодня</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{today_amount}}</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                            <div class="col-xl-3 col-md-6 mb-4">
+                                <div class="card border-left-success shadow h-100 py-2">
+                                    <div class="card-body">
+                                        <div class="row no-gutters align-items-center">
+                                            <div class="col mr-2">
+                                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                                    Revenue</div>
+                                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{bookings_successful_revenue_amount}}</div>
+                                            </div>
+                                            <div class="col-auto">
+                                                <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-success shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                                Наша комиссия сегодня</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{commission_amount}}</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
-
                     </div>
 
-                    <!-- Content Row -->
+                    <div class="content-block" id="block3">
+                        <div class="title">
+                            <h1>Графики за</h1>
+                            <select name="period" class="period_select" onchange="location = this.value;">
+                                <option value="?period=today#block3" {% if period == "today" %}selected{% endif %}>Сегодня</option>
+                                <option value="?period=last_week#block3" {% if period == "last_week" %}selected{% endif %}>Последнюю неделю</option>
+                                <option value="?period=last_month#block3" {% if period == "last_month" %}selected{% endif %}>Последний месяц</option>
+                                <option value="?period=last_year#block3" {% if period == "last_year" %}selected{% endif %}>Последний год</option>
+                            </select>
+                            <div class="loader"><div class="spinner-border text-primary" role="status"></div></div>
+                        </div>
 
-                    <div class="row">
-
-                        <!-- Area Chart -->
-                        <div class="col-xl-12 col-lg-12">
-                            <div class="card shadow mb-4">
-                                <!-- Card Header - Dropdown -->
-                                <div
-                                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-primary">Кол-во заказов за последнюю неделю</h6>
-                                    <div class="dropdown no-arrow">
-                                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
-                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
-                                            aria-labelledby="dropdownMenuLink">
-                                            <div class="dropdown-header">Период:</div>
-                                            <a class="dropdown-item" href="#">За неделю</a>
-                                            <a class="dropdown-item" href="#">За месяц</a>
-                                            <div class="dropdown-divider"></div>
-                                            <a class="dropdown-item" href="#">За год</a>
-                                        </div>
+                        <div class="row">
+                            <!-- Area Chart -->
+                            <div class="col-xl-12 col-lg-12">
+                                <div class="card shadow mb-4">
+                                    <!-- Card Header - Dropdown -->
+                                    <div
+                                        class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                        <h6 class="m-0 font-weight-bold text-primary">Кол-во новых пользователей</h6>
                                     </div>
-                                </div>
-                                <!-- Card Body -->
-                                <div class="card-body">
-                                    <div class="chart-area">
-                                        <canvas id="myAreaChart"></canvas>
+                                    <!-- Card Body -->
+                                    <div class="card-body">
+                                        <div class="chart-area">
+                                            <canvas id="newUsersChart"></canvas>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
                     </div>
 
                 </div>
@@ -191,6 +213,11 @@
     <!-- Page level custom scripts -->
     <!-- <script src="js/demo/chart-area-demo.js"></script> -->
     <script type="text/javascript">
+
+        $('.period_select').on('change', function(e){
+            $(this).next().css('display', 'inline-block');
+        });
+
         // Set new default font family and font color to mimic Bootstrap's default styling
         Chart.defaults.global.defaultFontFamily = 'Nunito', '-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
         Chart.defaults.global.defaultFontColor = '#858796';
@@ -225,7 +252,7 @@
         var myLineChart = new Chart(ctx, {
           type: 'line',
           data: {
-            labels: [{% for item in dates_list %}"{{item}}",{% endfor %}],
+            labels: [{% for item in bookings_dates_list %}"{{item}}",{% endfor %}],
             datasets: [{
               label: "Заказов - ",
               lineTension: 0.3,
@@ -309,6 +336,185 @@
             }
           }
         });
+
+        var payments_chart_ctx = document.getElementById("paymentsChart");
+        var myLineChart = new Chart(payments_chart_ctx, {
+          type: 'line',
+          data: {
+            labels: [{% for item in payments_dates_list %}"{{item}}",{% endfor %}],
+            datasets: [{
+              label: "Платежей - ",
+              lineTension: 0.3,
+              backgroundColor: "rgba(78, 115, 223, 0.05)",
+              borderColor: "rgba(78, 115, 223, 1)",
+              pointRadius: 3,
+              pointBackgroundColor: "rgba(78, 115, 223, 1)",
+              pointBorderColor: "rgba(78, 115, 223, 1)",
+              pointHoverRadius: 3,
+              pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+              pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+              pointHitRadius: 10,
+              pointBorderWidth: 2,
+              data: {{payments_count_list}},
+            }],
+          },
+          options: {
+            maintainAspectRatio: false,
+            layout: {
+              padding: {
+                left: 10,
+                right: 25,
+                top: 25,
+                bottom: 0
+              }
+            },
+            scales: {
+              xAxes: [{
+                time: {
+                  unit: 'date'
+                },
+                gridLines: {
+                  display: false,
+                  drawBorder: false
+                },
+                ticks: {
+                  maxTicksLimit: 7
+                }
+              }],
+              yAxes: [{
+                ticks: {
+                  maxTicksLimit: 5,
+                  padding: 10,
+                  // Include a dollar sign in the ticks
+                  callback: function(value, index, values) {
+                    return number_format(value);
+                  }
+                },
+                gridLines: {
+                  color: "rgb(234, 236, 244)",
+                  zeroLineColor: "rgb(234, 236, 244)",
+                  drawBorder: false,
+                  borderDash: [2],
+                  zeroLineBorderDash: [2]
+                }
+              }],
+            },
+            legend: {
+              display: false
+            },
+            tooltips: {
+              backgroundColor: "rgb(255,255,255)",
+              bodyFontColor: "#858796",
+              titleMarginBottom: 10,
+              titleFontColor: '#6e707e',
+              titleFontSize: 14,
+              borderColor: '#dddfeb',
+              borderWidth: 1,
+              xPadding: 15,
+              yPadding: 15,
+              displayColors: false,
+              intersect: false,
+              mode: 'index',
+              caretPadding: 10,
+              callbacks: {
+                label: function(tooltipItem, chart) {
+                  var datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
+                  return datasetLabel + number_format(tooltipItem.yLabel);
+                }
+              }
+            }
+          }
+        });
+
+        var new_users_chart_ctx = document.getElementById("newUsersChart");
+        var myLineChart = new Chart(new_users_chart_ctx, {
+          type: 'line',
+          data: {
+            labels: [{% for item in users_dates_list %}"{{item}}",{% endfor %}],
+            datasets: [{
+              label: "Пользователей - ",
+              lineTension: 0.3,
+              backgroundColor: "rgba(78, 115, 223, 0.05)",
+              borderColor: "rgba(78, 115, 223, 1)",
+              pointRadius: 3,
+              pointBackgroundColor: "rgba(78, 115, 223, 1)",
+              pointBorderColor: "rgba(78, 115, 223, 1)",
+              pointHoverRadius: 3,
+              pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+              pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+              pointHitRadius: 10,
+              pointBorderWidth: 2,
+              data: {{users_count_list}},
+            }],
+          },
+          options: {
+            maintainAspectRatio: false,
+            layout: {
+              padding: {
+                left: 10,
+                right: 25,
+                top: 25,
+                bottom: 0
+              }
+            },
+            scales: {
+              xAxes: [{
+                time: {
+                  unit: 'date'
+                },
+                gridLines: {
+                  display: false,
+                  drawBorder: false
+                },
+                ticks: {
+                  maxTicksLimit: 7
+                }
+              }],
+              yAxes: [{
+                ticks: {
+                  maxTicksLimit: 5,
+                  padding: 10,
+                  // Include a dollar sign in the ticks
+                  callback: function(value, index, values) {
+                    return number_format(value);
+                  }
+                },
+                gridLines: {
+                  color: "rgb(234, 236, 244)",
+                  zeroLineColor: "rgb(234, 236, 244)",
+                  drawBorder: false,
+                  borderDash: [2],
+                  zeroLineBorderDash: [2]
+                }
+              }],
+            },
+            legend: {
+              display: false
+            },
+            tooltips: {
+              backgroundColor: "rgb(255,255,255)",
+              bodyFontColor: "#858796",
+              titleMarginBottom: 10,
+              titleFontColor: '#6e707e',
+              titleFontSize: 14,
+              borderColor: '#dddfeb',
+              borderWidth: 1,
+              xPadding: 15,
+              yPadding: 15,
+              displayColors: false,
+              intersect: false,
+              mode: 'index',
+              caretPadding: 10,
+              callbacks: {
+                label: function(tooltipItem, chart) {
+                  var datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
+                  return datasetLabel + number_format(tooltipItem.yLabel);
+                }
+              }
+            }
+          }
+        });
+
 
     </script>
 
