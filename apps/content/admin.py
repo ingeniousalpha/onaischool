@@ -140,13 +140,14 @@ class TopicInline(admin.StackedInline):
 @admin.register(School)
 class SchoolAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     list_display = ('id', 'name', 'priority')
-    search_fields = ['name_ru', 'name_kk']
+    search_fields = ['name__ru', 'name__kk']
+    list_filter = ('city',)
 
 
 @admin.register(Direction)
 class DirectionAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     list_display = ('id', 'name', 'description', 'image', 'priority')
-    search_fields = ['name_ru', 'name_kk']
+    search_fields = ['name__ru', 'name__kk']
     list_editable = ('priority',)
     inlines = [SubjectInline, ExamInline]
 
@@ -154,7 +155,7 @@ class DirectionAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
 @admin.register(Subject)
 class SubjectAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     list_display = ('id', 'name', 'direction', 'priority')
-    search_fields = ['name_ru', 'name_kk']
+    search_fields = ['name__ru', 'name__kk']
     list_filter = ('direction',)
     list_editable = ('priority',)
     inlines = [CourseInline, QuizInline]
@@ -163,7 +164,7 @@ class SubjectAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
 @admin.register(Course)
 class CourseAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     list_display = ('id', 'name', 'subject', 'grade', 'priority')
-    search_fields = ['name_ru', 'name_kk']
+    search_fields = ['name__ru', 'name__kk']
     list_filter = ('subject',)
     list_editable = ('priority',)
     inlines = [QuizInline]
@@ -172,7 +173,7 @@ class CourseAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
 @admin.register(Chapter)
 class ChapterAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     list_display = ('id', 'name', 'quarter', 'course', 'priority')
-    search_fields = ['name_ru', 'name_kk']
+    search_fields = ['name__ru', 'name__kk']
     list_editable = ('priority',)
     inlines = [TopicInline]
 
@@ -181,7 +182,7 @@ class ChapterAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
 class TopicAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     list_display = ('id', 'name', 'description', 'chapter', 'priority')
     list_editable = ('priority',)
-    search_fields = ['name_ru', 'name_kk']
+    search_fields = ['name__ru', 'name__kk']
     list_filter = ['chapter']
     form = TopicAdminForm
     inlines = [QuizInline]

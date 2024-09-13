@@ -78,6 +78,3 @@ class UserAdmin(BaseUserAdmin):
             ),
         }),
     )
-
-
-admin.site.register(UserQuizQuestion)

@@ -67,7 +67,7 @@ class QuizAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
 @admin.register(Question)
 class QuestionAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     fields = ('title', 'image', 'quiz', 'type', 'explain_video')
-    search_fields = ('title_ru', 'title_kk')
+    search_fields = ('title__ru', 'title__kk')
     list_display = ('id', 'title', 'quiz',)
     list_filter = ('quiz',)
     inlines = [AnswerOptionInline]
@@ -76,7 +76,7 @@ class QuestionAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
 @admin.register(EntranceExam)
 class EntranceExamAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     inlines = [ExamPerDayInline]
-    search_fields = ('title_ru', 'title_kk')
+    search_fields = ('title__ru', 'title__kk')
 
 
 class ExamSubjectForm(forms.ModelForm):
@@ -145,7 +145,7 @@ class ExamSubjectForm(forms.ModelForm):
 @admin.register(EntranceExamSubject)
 class ExamSubjectAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     inlines = [ExamQuestionInline]
-    search_fields = ('title_ru', 'title_kk')
+    search_fields = ('title__ru', 'title__kk')
     list_filter = ('exam_per_day__exam',)
     form = ExamSubjectForm
 
@@ -153,6 +153,6 @@ class ExamSubjectAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
 @admin.register(ExamQuestion)
 class ExamQuestionAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     inlines = [ExamAnswerOptionInline]
-    search_fields = ('title_ru', 'title_kk')
+    search_fields = ('title__ru', 'title__kk')
     list_filter = ('assessment_subject',)
 
