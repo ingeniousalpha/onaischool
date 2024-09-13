@@ -8,7 +8,8 @@ class LanguageHeaderMiddleware(object):
 
     def __call__(self, request):
         response = self.get_response(request)
-        response['HTTP_LANGUAGE'] = 'ru'
+        response['Language'] = 'ru'
+        response['Access-Control-Allow-Headers'] = 'Authorization, Content-Type, Language'
         return response
 
     def process_request(self, request):
