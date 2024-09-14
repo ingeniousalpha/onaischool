@@ -105,7 +105,7 @@ class ExamPerDaySerializer(AbstractTitleSerializer):
         fields = ['id', 'title', 'duration', 'subjects']
 
     def get_subjects(self, obj):
-        return ExamSubjectSerializer(obj.exam_subjects, many=True).data
+        return ExamSubjectSerializer(obj.exam_subjects, many=True, context=self.context).data
 
 
 class ExamPerDayDetailSerializer(ExamPerDaySerializer):
@@ -133,7 +133,7 @@ class EntranceExamSerializer(serializers.ModelSerializer):
         return ''
 
     def get_exam_subjects(self, obj):
-        return ExamPerDaySerializer(obj.exam_per_day.all(), many=True).data
+        return ExamPerDaySerializer(obj.exam_per_day.all(), many=True, context=self.context).data
 
 
 class ExtranceExamDetailSerializer(EntranceExamSerializer):
@@ -162,7 +162,7 @@ class ExtranceExamDetailSerializer(EntranceExamSerializer):
         request = self.context.get('request')
         user = request.user
         exam_per_days = obj.exam_per_day.exclude(id__in=user.user_exam_results.values_list('exam_per_day', flat=True))
-        return ExamPerDaySerializer(exam_per_days, many=True).data
+        return ExamPerDaySerializer(exam_per_days, many=True, context=self.context).data
 
 
 class AnswersSerializer(AbstractImageSerializer, UserPropertyMixin):
