@@ -29,8 +29,13 @@ class TopicSerializer(AbstractNameSerializer, AbstractImageSerializer):
 
 
 class TopicRetrieveSerializer(TopicSerializer, AbstractDescriptionSerializer):
+    course_info = serializers.SerializerMethodField()
+
     class Meta(TopicSerializer.Meta):
-        fields = TopicSerializer.Meta.fields + ['description']
+        fields = TopicSerializer.Meta.fields + ['description', 'course_info']
+
+    def get_course_info(self, obj):
+        return CourseSerializerWithoutChapters(obj.chapter.course, many=False).data
 
     def get_video_link(self, obj):
         return obj.video_link.translate()
@@ -119,6 +124,27 @@ class CourseSerializer(AbstractNameSerializer):
         ]
 
         return grouped_chapters_data
+
+
+class CourseDetailSerializer(CourseSerializer):
+    subject_info = serializers.SerializerMethodField()
+
+    class Meta(CourseSerializer.Meta):
+        model = Course
+        fields = CourseSerializer.Meta.fields + ['subject_info']
+
+    def get_subject_info(self, obj):
+        return SubjectForMyCourseSerializer(obj.subject, many=False).data
+
+
+class CourseSerializerWithoutChapters(AbstractNameSerializer):
+    subject_info = serializers.SerializerMethodField()
+    class Meta:
+        model = Course
+        fields = ['id', 'name', 'subject_info']
+
+    def get_subject_info(self, obj):
+        return SubjectForMyCourseSerializer(obj.subject, many=False).data
 
 
 class CourseListSerializer(AbstractNameSerializer):

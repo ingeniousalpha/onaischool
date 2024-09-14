@@ -8,7 +8,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from apps.common.mixins import PrivateSONRendererMixin
 from apps.content.models import Direction, Course, Topic
 from apps.content.serializers import DirectionSerializer, DirectionRetrieveSerializer, CourseSerializer, \
-    TopicSerializer, TopicRetrieveSerializer, MyTopicSerializer, MyTopicAddSerializer
+    TopicSerializer, TopicRetrieveSerializer, MyTopicSerializer, MyTopicAddSerializer, CourseDetailSerializer
 from apps.users.models import MyTopic
 
 
@@ -28,7 +28,7 @@ class CourseView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
 
     def get_serializer_class(self):
         if self.action == "retrieve":
-            return CourseSerializer
+            return CourseDetailSerializer
         return CourseSerializer
 
 
