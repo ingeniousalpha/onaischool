@@ -35,7 +35,8 @@ class TopicRetrieveSerializer(TopicSerializer, AbstractDescriptionSerializer):
         fields = TopicSerializer.Meta.fields + ['description', 'course_info']
 
     def get_course_info(self, obj):
-        return CourseSerializerWithoutChapters(obj.chapter.course, many=False).data
+        if obj.chapter:
+            return CourseSerializerWithoutChapters(obj.chapter.course, many=False).data
 
     def get_video_link(self, obj):
         return obj.video_link.translate()
