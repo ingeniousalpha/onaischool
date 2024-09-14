@@ -225,6 +225,12 @@ AUTH_PASSWORD_VALIDATORS = [
 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    'https://onai.school',
+    'https://okytoky.kz',
+    'http://localhost:3000',
+    'http://localhost:3000/',
+]
 CORS_ALLOW_HEADERS = [
     'access-control-allow-origin',
     'accept',
