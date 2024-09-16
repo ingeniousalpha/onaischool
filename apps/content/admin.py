@@ -83,19 +83,18 @@ class TopicAdminForm(forms.ModelForm):
         quiz = Quiz.objects.create(topic=topic)
         for _, row in df.iterrows():
 
-            print(row)
-            print(bool(row['kk_answers']))
             kk_correct_answers = str(row['kk_correct_answers']).split('\n')
             ru_correct_answers = str(row['ru_correct_answers']).split('\n')
             kk_answers = row['kk_answers'].split('\n') if row['kk_answers'] == row['kk_answers'] else None
             ru_answers = row['ru_answers'].split('\n') if row['ru_answers'] == row['ru_answers'] else None
-            explain_video_url = row['video_url'] if row['video_url'] == row['video_url'] else None
+            kk_explain_video_url = row['kk_video_url'] if row['kk_video_url'] == row['kk_video_url'] else None
+            ru_explain_video_url = row['ru_video_url'] if row['ru_video_url'] == row['ru_video_url'] else None
 
             question = Question.objects.create(
                 title={"kk": row['kk_task'], "ru": row['ru_task']},
                 # image={"kk": row['image_for_task']},
                 explanation_answer={"kk": row['kk_explanation'], "ru": row['ru_explanation']},
-                explain_video={"kk": explain_video_url},
+                explain_video={"kk": kk_explain_video_url, "ru": ru_explain_video_url},
                 quiz=quiz,
                 type=QuestionType.multiple_choice if len(kk_correct_answers) > 1 or len(ru_correct_answers) > 1 else QuestionType.one_choice
             )
