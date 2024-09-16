@@ -6,11 +6,17 @@ from apps.location.models import City
 
 
 class CitySerializer(AbstractNameSerializer):
-    schools = serializers.SerializerMethodField()
 
     class Meta:
         model = City
-        fields = ['id', 'name', 'schools']
+        fields = ['id', 'name']
+
+
+class CityDetailSerializer(CitySerializer):
+    schools = serializers.SerializerMethodField()
+
+    class Meta(CitySerializer.Meta):
+        fields = CitySerializer.Meta.fields + ['schools']
 
     def get_schools(self, obj):
         return SchoolSerializer(obj.schools, many=True).data

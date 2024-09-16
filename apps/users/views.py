@@ -8,15 +8,22 @@ from rest_framework.generics import RetrieveUpdateAPIView, GenericAPIView, ListA
 
 from apps.common.encryption import decrypt
 from apps.common.exceptions import EmailConfirmationExpired, EmailAlreadyConfirmed
-from apps.common.mixins import JSONRendererMixin, PublicJSONRendererMixin
+from apps.common.mixins import JSONRendererMixin, PublicJSONRendererMixin, PrivateSONRendererMixin
 from apps.common.services import generate_password
-from apps.users.serializers import UserProfileSerializer
+from apps.users.models import Avatar
+from apps.users.serializers import UserProfileSerializer, AvatarSerializer, UserUpdateSerializer
 from apps.users.services import get_user
 
 logger = logging.getLogger('users')
 
 
-class AccountView(JSONRendererMixin, RetrieveUpdateAPIView):
+class AvatarView(JSONRendererMixin, ListAPIView):
+    queryset = Avatar.objects.all()
+    serializer_class = AvatarSerializer
+    pagination_class = None
+
+
+class AccountView(PrivateSONRendererMixin, RetrieveUpdateAPIView):
     """ Получить/редактировать инфо о пользователе """
 
     parser_classes = (JSONParser, MultiPartParser)
@@ -25,23 +32,23 @@ class AccountView(JSONRendererMixin, RetrieveUpdateAPIView):
         if hasattr(self.request, 'method'):
             if self.request.method == 'GET':
                 return UserProfileSerializer
-            # if self.request.method == 'PUT':
-            #     return UserUpdateSerializer
+            if self.request.method == 'PUT':
+                return UserUpdateSerializer
 
     def retrieve(self, request, *args, **kwargs):
         serializer = self.get_serializer(instance=request.user)
         return Response(serializer.data)
 
-    # def update(self, request, *args, **kwargs):
-    #     serializer = self.get_serializer(
-    #         instance=request.user,
-    #         data=request.data,
-    #         partial=True
-    #     )
-    #     serializer.is_valid(raise_exception=True)
-    #     serializer.save()
-    #
-    #     return Response(serializer.validated_data)
+    def update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(
+            instance=request.user,
+            data=request.data,
+            partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.validated_data)
 
 
 # class PasswordResetView(JSONRendererMixin, GenericAPIView):

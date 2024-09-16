@@ -6,6 +6,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from phonenumber_field.modelfields import PhoneNumberField
 
 from config.settings import Languages
+from . import GenderChoices
 from .managers import UserManager
 
 from .. import Grades, Roles
@@ -65,6 +66,13 @@ class User(PermissionsMixin, AbstractBaseUser):
         null=True,
         blank=True
     )
+    avatar = models.ForeignKey(
+        "Avatar",
+        on_delete=models.CASCADE,
+        related_name="users",
+        null=True,
+        blank=True
+    )
 
     USERNAME_FIELD = "email"
     objects = UserManager()
@@ -107,6 +115,16 @@ class User(PermissionsMixin, AbstractBaseUser):
         if self.created_at + timezone.timedelta(days=1) > timezone.now():
             return True
         return self.is_active
+
+
+class Avatar(models.Model):
+    gender = models.CharField(max_length=20, choices=GenderChoices.choices, default=GenderChoices.MALE, verbose_name="Язык")
+    image = models.ImageField(verbose_name="Смайлик", null=False, upload_to="images/users/")
+
+    class Meta:
+        verbose_name = _("Аватарка")
+        verbose_name_plural = _("Аватары")
+        ordering = ('gender',)
 
 
 class MyTopic(TimestampModel):

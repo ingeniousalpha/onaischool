@@ -229,7 +229,6 @@ CORS_ALLOWED_ORIGINS = [
     'https://onai.school',
     'https://okytoky.kz',
     'http://localhost:3000',
-    'http://localhost:3000/',
 ]
 CORS_ALLOW_HEADERS = [
     'access-control-allow-origin',
