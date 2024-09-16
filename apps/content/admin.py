@@ -89,6 +89,7 @@ class TopicAdminForm(forms.ModelForm):
             ru_answers = row['ru_answers'].split('\n') if row['ru_answers'] == row['ru_answers'] else None
             kk_explain_video_url = row['kk_video_url'] if row['kk_video_url'] == row['kk_video_url'] else None
             ru_explain_video_url = row['ru_video_url'] if row['ru_video_url'] == row['ru_video_url'] else None
+            open_answer = row.get('open_answer', None)
 
             question = Question.objects.create(
                 title={"kk": row['kk_task'], "ru": row['ru_task']},
@@ -98,23 +99,30 @@ class TopicAdminForm(forms.ModelForm):
                 quiz=quiz,
                 type=QuestionType.multiple_choice if len(kk_correct_answers) > 1 or len(ru_correct_answers) > 1 else QuestionType.one_choice
             )
-
-            print('2222')
-            if not (kk_answers and ru_answers) and (kk_correct_answers and ru_correct_answers):
-                for kk_answer, ru_answer in zip(kk_correct_answers, ru_correct_answers):
-                    AnswerOption.objects.create(
-                        text={"kk": kk_answer, "ru": ru_answer},
-                        is_correct=True,
-                        question=question
-                    )
+            if open_answer is not None:
+                question.type = QuestionType.open_answer
+                AnswerOption.objects.create(
+                    text={"kk": open_answer, "ru": open_answer},
+                    is_correct=True,
+                    question=question
+                )
+                question.save(update_fields=['type'])
             else:
-                for kk_answer, ru_answer in zip(kk_answers, ru_answers):
-                    is_correct = kk_answer in kk_correct_answers or ru_answer in ru_correct_answers
-                    AnswerOption.objects.create(
-                        text={"kk": kk_answer, "ru": ru_answer},
-                        is_correct=is_correct,
-                        question=question
-                    )
+                if not (kk_answers and ru_answers) and (kk_correct_answers and ru_correct_answers):
+                    for kk_answer, ru_answer in zip(kk_correct_answers, ru_correct_answers):
+                        AnswerOption.objects.create(
+                            text={"kk": kk_answer, "ru": ru_answer},
+                            is_correct=True,
+                            question=question
+                        )
+                else:
+                    for kk_answer, ru_answer in zip(kk_answers, ru_answers):
+                        is_correct = kk_answer in kk_correct_answers or ru_answer in ru_correct_answers
+                        AnswerOption.objects.create(
+                            text={"kk": kk_answer, "ru": ru_answer},
+                            is_correct=is_correct,
+                            question=question
+                        )
 
 
 class SubjectInline(admin.StackedInline):
