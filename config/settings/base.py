@@ -51,7 +51,7 @@ TG_AUTH_BOT_HOST = os.getenv('TG_AUTH_BOT_HOST', 'http://gp-tgauth-bot:3113')
 # RABBITMQ_HOST_LOCAL = '185.100.67.155'
 
 # Redis settings
-REDIS_HOST = os.getenv("REDIS_HOST", "redis")
+REDIS_HOST = os.getenv("REDIS_HOST", "onai-redis")
 # REDIS_HOST = "localhost"
 REDIS_PORT = os.getenv("REDIS_PORT", "6379")
 REDIS_DB_FOR_CELERY = os.getenv("REDIS_DB_FOR_CELERY", "0")

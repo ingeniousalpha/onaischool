@@ -1,11 +1,43 @@
 import pyotp
+from uuid import uuid4
 from phonenumbers import PhoneNumber
 from phonenumber_field.modelfields import PhoneNumberField
 from django.db import models, transaction
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _  # noqa
+
 
 from apps.authentication.managers import OTPQueryset
 from apps.common.models import TimestampModel
+
+
+class SMSMessage(TimestampModel):
+    uuid = models.UUIDField(_("Идентификатор"), default=uuid4, unique=True, editable=False)
+    recipients = models.CharField(_("Получатели"), max_length=255, editable=False)
+    content = models.TextField(_("Содержимое"), editable=False)
+    error_code = models.IntegerField(_("Код ошибки"), null=True, editable=False)
+    error_description = models.CharField(
+        _("Описание ошибки"), max_length=255, null=True, editable=False
+    )
+
+    class Meta:
+        verbose_name = _("SMS сообщение")
+        verbose_name_plural = _("SMS сообщения")
+
+
+class SMSType(models.TextChoices):
+    OTP = "OTP", "Отправка одноразового пароля"
+
+
+class SMSTemplate(models.Model):
+    name = models.CharField(
+        _("Наименование"), max_length=32, choices=SMSType.choices, unique=True
+    )
+    content = models.TextField(_("Содержимое"))
+
+    class Meta:
+        verbose_name = _("Шаблон СМС")
+        verbose_name_plural = _("Шаблоны СМС")
 
 
 class OTP(TimestampModel):

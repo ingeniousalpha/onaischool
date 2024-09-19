@@ -13,6 +13,7 @@ from .serializers import (
     SigninWithoutOTPSerializer, TokenRefreshSerializer, VerifyOTPSerializer,
     MyTokenObtainSerializer, SignupSerializer, AddChildrenSerializer, AccountSerializer, AuthByChildrenSerializer,
     PasswordResetRequestSerializer, PasswordResetConfirmSerializer)
+from .services import send_otp
 
 User = get_user_model()
 
@@ -32,7 +33,7 @@ class SignupView(PublicJSONRendererMixin, CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        # mobile_phone = serializer.validated_data["mobile_phone"]
+        mobile_phone = serializer.validated_data["mobile_phone"]
         # send_otp(mobile_phone)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 

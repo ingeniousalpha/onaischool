@@ -6,11 +6,18 @@ from phonenumber_field.phonenumber import PhoneNumber
 from pip._vendor import requests
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer as BaseTokenObtainPairSerializer
 from constance import config
+from datetime import timedelta
+from typing import Tuple, Union, Optional
+
+from django.db import transaction
+from django.utils import timezone
 
 from apps.common.exceptions import BaseAPIException
 from apps.users.exceptions import PasswordMinLength, PasswordsAreNotEqual, PasswordInvalid
+from .models import OTP, SMSMessage, SMSTemplate
 from .exceptions import InvalidOTP
-from .models import OTP
+from .tasks import send_sms_task
+
 
 logger_users = logging.getLogger("users")
 
@@ -45,6 +52,48 @@ def validate_password_in_forms(password1, password2=None):
         validate_password(password1, password2)
     except BaseAPIException as e:
         ValidationError(e.get_message())
+
+
+def send_sms(
+    recipient: Union[str, PhoneNumber],
+    message: str = "",
+    template_name: Union[str, Tuple[str, str]] = None,
+    kwargs: dict = None,
+    delta: Optional[timedelta] = None,
+):
+    if kwargs is None:
+        kwargs = {}
+
+    if not message:
+        if not template_name:
+            raise ValueError("Either content or template_name needs to be provided")
+
+        message = SMSTemplate.objects.get(name=template_name).content
+    message = message.format(**kwargs)
+    if not isinstance(recipient, list):
+        recipient = [recipient]
+
+    if delta:
+        eta = timezone.now() + delta
+    else:
+        eta = None
+
+    with transaction.atomic():
+        sms = SMSMessage(recipients=', '.join(recipient), content=message)
+        sms.save()
+        transaction.on_commit(
+            lambda: send_sms_task.apply_async(
+                eta=eta, args=[recipient, message, sms.uuid]
+            )
+        )
+
+
+def send_otp(mobile_phone: PhoneNumber, template_name: str = "OTP"):
+    otp = OTP.generate(mobile_phone)
+    print('opt', otp)
+    send_sms(
+        recipient=mobile_phone.as_e164, template_name=template_name, kwargs={"otp": otp},
+    )
 
 
 def verify_otp(code: str, mobile_phone: PhoneNumber, save=False):

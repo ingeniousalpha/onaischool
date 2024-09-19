@@ -7,9 +7,11 @@ from rest_framework_simplejwt.serializers import TokenRefreshSerializer as BaseT
 from six import text_type
 from constance import config
 from django.core.cache import cache
+from phonenumber_field.serializerfields import PhoneNumberField
 
 from apps.users.services import get_or_create_user_by_phone
 from .exceptions import UserNotFound, UserAlreadyExists, SchoolNotFound, InCorrectPassword, AccessDenied, InvalidOTP
+from .models import OTP
 from .services import generate_access_and_refresh_tokens_for_user, validate_password
 from .. import Roles
 from ..content.models import School
@@ -88,7 +90,7 @@ class SignupSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True, required=True, validators=[validate_password])
     re_password = serializers.CharField(write_only=True, required=True)
-    mobile_phone = serializers.CharField(required=True, write_only=True)
+    mobile_phone = PhoneNumberField(required=True)
 
     class Meta:
         model = User
@@ -186,7 +188,10 @@ class VerifyOTPSerializer(serializers.Serializer):
         return generate_access_and_refresh_tokens_for_user(instance)
 
     def validate(self, attrs):
-        if attrs['otp_code'] != '1111':
+        if config.USE_DEFAULT_OTP and attrs['otp_code'] != config.DEFAULT_OTP:
+            raise InvalidOTP
+
+        if not OTP.objects.filter(mobile_phone=self.mobile_phone, code=attrs['otp_code']).exists():
             raise InvalidOTP
 
         return attrs
