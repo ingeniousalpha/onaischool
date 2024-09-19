@@ -82,7 +82,7 @@ class TopicSerializerWithSubject(TopicSerializer, UserPropertyMixin):
         if quizzes:
             quiz = quizzes.first()
             questions_amount = quiz.questions_amount
-            answered_count = self.user.user_quiz_questions.filter(Q(answers__isnull=False)
+            answered_count = self.user.user_quiz_questions.filter(Q(is_correct__isnull=False)
                                                                   & Q(quiz_id=quiz.id)).count()
         else:
             questions_amount = 0

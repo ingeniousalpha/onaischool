@@ -141,6 +141,8 @@ class CheckAnswerView(PrivateSONRendererMixin, APIView):
                 correct_answer_count += 1
         if answers.count() == correct_answer_count:
             uqq.is_correct = is_correct
+        else:
+            uqq.is_correct = False
         uqq.save(update_fields=['is_correct'])
         return Response(data)
 
