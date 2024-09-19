@@ -75,6 +75,10 @@ class TopicQuizzesView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
+        user = request.user
+        user_quiz_answer = instance.user_quiz_questions.filter(Q(user=user) & Q(question_id=instance.id)).first()
+        user_quiz_answer.is_correct = False
+        user_quiz_answer.save(update_fields=['is_correct'])
         serializer = self.get_serializer(instance, context={"request": request})
         return Response(serializer.data)
 

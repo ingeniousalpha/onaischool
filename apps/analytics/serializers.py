@@ -1,5 +1,6 @@
 from itertools import groupby
 
+from django.db.models import Q
 from rest_framework import serializers
 from django.utils import timezone
 
@@ -186,11 +187,12 @@ class AnswersSerializer(AbstractImageSerializer, UserPropertyMixin):
 class QuizQuestionsSerializer(AbstractTitleSerializer, AbstractImageSerializer, UserPropertyMixin):
     explain_video = serializers.SerializerMethodField()
     answers = serializers.SerializerMethodField()
+    answered = serializers.SerializerMethodField()
     answer_text = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
-        fields = ['id', 'title', 'image', 'explain_video', 'type', 'answers', 'answer_text']
+        fields = ['id', 'title', 'image', 'explain_video', 'type', 'answered', 'answers', 'answer_text']
 
     def get_explain_video(self, obj):
         return obj.explain_video.translate()
@@ -198,8 +200,12 @@ class QuizQuestionsSerializer(AbstractTitleSerializer, AbstractImageSerializer, 
     def get_answers(self, obj):
         if obj.type == QuestionType.open_answer:
             return []
-
         return AnswersSerializer(obj.answer_options, many=True, context=self.context).data
+
+    def get_answered(self, obj):
+        if obj.user_quiz_questions.filter(Q(user=self.user) & Q(question_id=obj.id)).first().is_correct is not None:
+            return True
+        return False
 
     def get_answer_text(self, obj):
         user = self.user
