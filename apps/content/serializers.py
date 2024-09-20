@@ -82,13 +82,16 @@ class TopicSerializerWithSubject(TopicSerializer, UserPropertyMixin):
             quiz_report = self.user.user_quiz_reports.filter(quiz_id=quiz.id)
             if quiz_report.filter(finished=False).exists():
                 report_id = quiz_report.first().id
+                user_quiz_questions = self.user.user_quiz_questions.filter(
+                    Q(is_correct__isnull=False) &
+                    Q(quiz_id=quiz.id) &
+                    Q(report_id=report_id))
             else:
-                report_id = quiz_report.first().id
+                user_quiz_questions = self.user.user_quiz_questions.filter(
+                    Q(is_correct__isnull=False) &
+                    Q(quiz_id=quiz.id))
+
             questions_amount = quiz.questions_amount
-            user_quiz_questions = self.user.user_quiz_questions.filter(
-                Q(is_correct__isnull=False) &
-                Q(quiz_id=quiz.id) &
-                Q(report_id=report_id))
             answered_count = user_quiz_questions.count()
         else:
             questions_amount = 0
