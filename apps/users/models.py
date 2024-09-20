@@ -204,6 +204,7 @@ class UserQuizQuestion(TimestampModel):
         blank=True,
         related_name='user_quiz_questions'
     )
+    user_answer = models.CharField(max_length=100, null=True, blank=True)
     answer_viewed = models.BooleanField(default=False)
     used_hints = models.BooleanField(default=False)
     is_correct = models.BooleanField(null=True, blank=True)

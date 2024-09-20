@@ -192,12 +192,12 @@ class AnswersSerializer(AbstractImageSerializer, UserPropertyMixin):
 class QuizQuestionsSerializer(AbstractTitleSerializer, AbstractImageSerializer, UserPropertyMixin):
     explain_video = serializers.SerializerMethodField()
     answers = serializers.SerializerMethodField()
-    answered = serializers.SerializerMethodField()
-    answer_text = serializers.SerializerMethodField()
+    is_selected = serializers.SerializerMethodField()
+    open_answer = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
-        fields = ['id', 'title', 'image', 'explain_video', 'type', 'answered', 'answers', 'answer_text']
+        fields = ['id', 'title', 'image', 'explain_video', 'type', 'is_selected', 'answers', 'answer_text']
 
     def get_explain_video(self, obj):
         return obj.explain_video.translate()
@@ -207,17 +207,20 @@ class QuizQuestionsSerializer(AbstractTitleSerializer, AbstractImageSerializer, 
             return []
         return AnswersSerializer(obj.answer_options, many=True, context=self.context).data
 
-    def get_answered(self, obj):
+    def get_is_selected(self, obj):
         if obj.user_quiz_questions.filter(Q(user=self.user) & Q(question_id=obj.id)).first().is_correct is not None:
             return True
         return False
 
-    def get_answer_text(self, obj):
+    def get_open_answer(self, obj):
         user = self.user
-        if obj.type == QuestionType.open_answer:
-            if obj.user_quiz_questions.filter(user=user).exists():
-                if obj.user_quiz_questions.filter(user=user).first().answers.exists():
-                    return obj.user_quiz_questions.filter(user=user).first().answers.first().text.translate()
+        if obj.type == QuestionType.open_answer and obj.user_quiz_questions.filter(user=user).exists():
+            uqq = obj.user_quiz_questions.filter(user=user).first()
+            return {
+                "is_correct": uqq.is_correct,
+                "user_answer": uqq.user_answer,
+            }
+        return {}
 
 
 class QuizQuestionDetailSerializer(QuizQuestionsSerializer):

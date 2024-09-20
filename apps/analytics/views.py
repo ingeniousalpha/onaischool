@@ -132,6 +132,7 @@ class CheckAnswerView(PrivateSONRendererMixin, APIView):
 
                 elif answer.text.ru.lower() == open_answer.lower():
                     uqq.answers.add(answer.id)
+                    uqq.user_answer = open_answer
                     uqq.is_correct = True
                 else:
                     is_correct = False
@@ -143,7 +144,7 @@ class CheckAnswerView(PrivateSONRendererMixin, APIView):
                 uqq.save(update_fields=['updated_at'])
             data.append({
                 'answer_id': answer.id,
-                'answer_text': open_answer,
+                'user_answer': open_answer,
                 'is_correct': is_correct,
                 'life_count': 4
             })
@@ -153,7 +154,7 @@ class CheckAnswerView(PrivateSONRendererMixin, APIView):
             uqq.is_correct = is_correct
         else:
             uqq.is_correct = False
-        uqq.save(update_fields=['is_correct'])
+        uqq.save(update_fields=['is_correct', 'user_answer'])
         return Response(data)
 
 

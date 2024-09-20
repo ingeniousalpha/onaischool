@@ -98,7 +98,7 @@ class TopicSerializerWithSubject(TopicSerializer, UserPropertyMixin):
             answered_count = 0
 
         return {
-            'answered': answered_count,
+            'is_selected': answered_count,
             'questions_amount': questions_amount
         }
 
