@@ -127,12 +127,11 @@ class CheckAnswerView(PrivateSONRendererMixin, APIView):
         for answer in answers:
             is_correct = True
             if answer.question.type == QuestionType.open_answer:
+                uqq.user_answer = open_answer
                 if not open_answer:
                     is_correct = False
-
                 elif answer.text.ru.lower() == open_answer.lower():
                     uqq.answers.add(answer.id)
-                    uqq.user_answer = open_answer
                     uqq.is_correct = True
                 else:
                     is_correct = False
