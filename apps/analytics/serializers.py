@@ -197,7 +197,7 @@ class QuizQuestionsSerializer(AbstractTitleSerializer, AbstractImageSerializer, 
 
     class Meta:
         model = Question
-        fields = ['id', 'title', 'image', 'explain_video', 'type', 'is_selected', 'answers', 'answer_text']
+        fields = ['id', 'title', 'image', 'explain_video', 'type', 'is_selected', 'answers', 'open_answer']
 
     def get_explain_video(self, obj):
         return obj.explain_video.translate()
