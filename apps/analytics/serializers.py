@@ -233,6 +233,30 @@ class QuizQuestionDetailSerializer(QuizQuestionsSerializer):
         return ''
 
 
+class QuestionSerializerWithHints(QuizQuestionsSerializer):
+    class Meta(QuizQuestionsSerializer.Meta):
+        model = Question
+        fields = QuizQuestionsSerializer.Meta.fields
+
+
+class QuestionSerializerWithAnswer(QuizQuestionsSerializer):
+    explanation_answer = serializers.SerializerMethodField()
+    explanation_answer_image = serializers.SerializerMethodField()
+
+    class Meta(QuizQuestionsSerializer.Meta):
+        model = Question
+        fields = QuizQuestionsSerializer.Meta.fields + ['explanation_answer', 'explanation_answer_image']
+
+    def get_explanation_answer(self, obj: Question) -> str:
+        return obj.explanation_answer.translate()
+
+    def get_explanation_answer_image(self, obj):
+        request = self.context.get('request')
+        if obj.explanation_answer_image.translate():
+            return request.build_absolute_uri(obj.explanation_answer_image.translate().url)
+        return ''
+
+
 class QuizSerializer(serializers.ModelSerializer):
     questions = serializers.SerializerMethodField()
 
@@ -241,7 +265,7 @@ class QuizSerializer(serializers.ModelSerializer):
         fields = ['id', 'questions', 'questions_amount']
 
     def get_questions(self, obj):
-        return QuizQuestionsSerializer(obj.questions, many=True).data
+        return QuizQuestionsSerializer(obj.questions, many=True, context=self.context).data
 
 
 class CheckAnswerSerializer(serializers.Serializer):

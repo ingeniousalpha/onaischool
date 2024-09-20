@@ -151,6 +151,24 @@ class MyTopic(TimestampModel):
         ordering = ['-created_at']
 
 
+class UserQuizReport(TimestampModel):
+    quiz = models.ForeignKey(
+        Quiz,
+        on_delete=models.CASCADE,
+        null=False,
+        related_name='user_quiz_reports'
+    )
+    user = models.ForeignKey(
+        User,
+        verbose_name="Пользователь",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="user_quiz_reports"
+    )
+    finished = models.BooleanField(default=False)
+
+
 class UserQuizQuestion(TimestampModel):
     quiz = models.ForeignKey(
         Quiz,
@@ -171,11 +189,20 @@ class UserQuizQuestion(TimestampModel):
         null=False,
         related_name='user_quiz_questions'
     )
+    report = models.ForeignKey(
+        UserQuizReport,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='user_quiz_questions'
+    )
     answers = models.ManyToManyField(
         AnswerOption,
         blank=True,
         related_name='user_quiz_questions'
     )
+    answer_viewed = models.BooleanField(default=False)
+    used_hints = models.BooleanField(default=False)
     is_correct = models.BooleanField(null=True, blank=True)
 
     class Meta:

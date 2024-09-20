@@ -1,18 +1,19 @@
 from django.db.models import Q
 from django.shortcuts import render
+from rest_framework import viewsets
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from django.utils import timezone
 
-from apps.analytics.exceptions import AnswerDoesntExists, ExamNotFound
+from apps.analytics.exceptions import AnswerDoesntExists, ExamNotFound, QuestionNotFound, YouCannotFinishQuiz
 from apps.analytics.models import Quiz, Question, AnswerOption, EntranceExam, ExamAnswerOption, QuestionType
 from apps.analytics.serializers import QuizSerializer, QuizQuestionsSerializer, QuizQuestionDetailSerializer, \
     CheckAnswerSerializer, EntranceExamSerializer, ExtranceExamDetailSerializer, EntranceCheckAnswerSerializer, \
-    FinishExamSerializer
+    FinishExamSerializer, QuestionSerializerWithHints, QuestionSerializerWithAnswer
 from apps.common.mixins import PrivateSONRendererMixin
-from apps.users.models import UserQuizQuestion, UserExamQuestion
+from apps.users.models import UserQuizQuestion, UserExamQuestion, UserQuizReport
 
 
 class EntranceExamView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
@@ -56,6 +57,12 @@ class TopicQuizzesView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
 
         quiz = Quiz.objects.filter(filter_conditions).first()
         if quiz:
+            user_quiz_report = user.user_quiz_reports.filter(Q(quiz_id=quiz.id) & Q(finished=False)).first()
+            if user_quiz_report is None:
+                user_quiz_report = UserQuizReport.objects.create(
+                    user_id=user.id,
+                    quiz_id=quiz.id
+                )
             user_quiz_questions = user.user_quiz_questions.filter(question=quiz.id)
             if user_quiz_questions.count() == quiz.questions_amount:
                 questions = [uqq.question for uqq in user_quiz_questions]
@@ -65,12 +72,15 @@ class TopicQuizzesView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
                     instance, created = UserQuizQuestion.objects.get_or_create(
                         quiz=question.quiz,
                         user=user,
-                        question=question
+                        question=question,
+                        report=user_quiz_report
                     )
             serializer = self.get_serializer(questions,
                                              many=True,
                                              context={"request": request})
-            return Response(serializer.data)
+
+            return Response({'quiz_id': quiz.id,
+                            'questions': serializer.data})
         return Response([])
 
     def retrieve(self, request, *args, **kwargs):
@@ -132,10 +142,10 @@ class CheckAnswerView(PrivateSONRendererMixin, APIView):
                 uqq.updated_at = timezone.now()
                 uqq.save(update_fields=['updated_at'])
             data.append({
-                    'answer_id': answer.id,
-                    'answer_text': open_answer,
-                    'is_correct': is_correct,
-                    'life_count': 4
+                'answer_id': answer.id,
+                'answer_text': open_answer,
+                'is_correct': is_correct,
+                'life_count': 4
             })
             if is_correct:
                 correct_answer_count += 1
@@ -180,9 +190,9 @@ class EntranceExamCheckAnswerView(PrivateSONRendererMixin, APIView):
             uqq.updated_at = timezone.now()
             uqq.save(update_fields=['updated_at'])
             data.append({
-                    'answer_id': answer.id,
-                    'is_correct': answer.is_correct,
-                    'life_count': 4
+                'answer_id': answer.id,
+                'is_correct': answer.is_correct,
+                'life_count': 4
             })
         uqq.is_correct = is_correct
         uqq.save(update_fields=['is_correct'])
@@ -221,3 +231,76 @@ class FinishEntranceExamView(PrivateSONRendererMixin, APIView):
             'passing_score': passing_score,
         }
         return Response(resp_data)
+
+
+class FinishQuizView(PrivateSONRendererMixin, APIView):
+    serializer_class = None
+
+    def post(self, request, *args, **kwargs):
+        return Response({})
+
+
+class QuizView(PrivateSONRendererMixin,
+               viewsets.GenericViewSet,
+               viewsets.mixins.ListModelMixin):
+    queryset = Question.objects.all()
+
+    def get_serializer_class(self):
+        actions = {
+            'show_hints': QuestionSerializerWithHints,
+            'show_answer': QuestionSerializerWithAnswer,
+        }
+        return actions.get(self.action)
+
+    def show_hints(self, request, pk: int):
+        instance = self.get_object()
+        user = request.user
+        user_quiz_answer = instance.user_quiz_questions.filter(Q(user=user) & Q(question_id=instance.id)).first()
+        user_quiz_answer.used_hints = True
+        user_quiz_answer.save(update_fields=['used_hints'])
+        serializer = self.get_serializer(instance, context={"request": request})
+        return Response(serializer.data)
+
+    def show_answer(self, request, pk: int):
+        instance = self.get_object()
+        user = request.user
+        user_quiz_answer = instance.user_quiz_questions.filter(Q(user=user) & Q(question_id=instance.id)).first()
+        user_quiz_answer.is_correct = False
+        user_quiz_answer.answer_viewed = True
+        user_quiz_answer.save(update_fields=['is_correct', 'answer_viewed'])
+        serializer = self.get_serializer(instance, context={"request": request})
+        return Response(serializer.data)
+
+
+class FinishQuiz(PrivateSONRendererMixin, viewsets.GenericViewSet):
+    queryset = Quiz.objects.all()
+
+    def finish_quiz(self, request, *args, **kwargs):
+        instance = self.get_object()
+        user = request.user
+        user_quiz_report = instance.user_quiz_reports.filter(Q(user=user) & Q(finished=False)).first()
+        if not user_quiz_report:
+            raise YouCannotFinishQuiz
+        user_quiz_answer = instance.user_quiz_questions.filter(
+            Q(user=user) &
+            Q(quiz_id=instance.id) &
+            Q(report_id=user_quiz_report.id))
+
+        questions_amount = instance.questions_amount
+        correct_questions = user_quiz_answer.filter(is_correct=True).count()
+
+        for uqa in user_quiz_answer.filter(Q(is_correct__isnull=True)).all():
+            uqa.is_correct = False
+            uqa.save(update_fields=['is_correct'])
+
+        incorrect_questions = questions_amount - correct_questions
+        data = {
+            'correct_questions': correct_questions,
+            'incorrect_questions': incorrect_questions,
+            'used_hints': user_quiz_answer.filter(used_hints=True).count(),
+            'viewed_answer': user_quiz_answer.filter(answer_viewed=True).count()
+        }
+        user_quiz_report.finished = True
+        user_quiz_report.save(update_fields=['finished'])
+
+        return Response(data)
