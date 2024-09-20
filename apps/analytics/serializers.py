@@ -179,8 +179,13 @@ class AnswersSerializer(AbstractImageSerializer, UserPropertyMixin):
 
     def get_selected(self, obj):
         user = self.user
+
         if user.is_authenticated:
-            return obj.user_quiz_questions.filter(user=user).exists()
+            question = obj.question
+            user_quiz_question = question.user_quiz_questions.filter(Q(user=self.user) & Q(report__finished=False)).first()
+            if user_quiz_question:
+                report_id = user_quiz_question.report.id
+                return obj.user_quiz_questions.filter(Q(user=user) & Q(report_id=report_id)).exists()
         return False
 
 

@@ -63,7 +63,7 @@ class TopicQuizzesView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
                     user_id=user.id,
                     quiz_id=quiz.id
                 )
-            user_quiz_questions = user.user_quiz_questions.filter(question=quiz.id)
+            user_quiz_questions = user.user_quiz_questions.filter(Q(quiz_id=quiz.id) & Q(report__finished=False))
             if user_quiz_questions.count() == quiz.questions_amount:
                 questions = [uqq.question for uqq in user_quiz_questions]
             else:
@@ -119,7 +119,7 @@ class CheckAnswerView(PrivateSONRendererMixin, APIView):
         if not answers.exists():
             raise AnswerDoesntExists
         data = []
-        uqq = UserQuizQuestion.objects.filter(user=user, question_id=question_id).first()
+        uqq = UserQuizQuestion.objects.filter(Q(user=user) & Q(question_id=question_id) & Q(report__finished=False)).first()
         if uqq:
             uqq.answers.clear()
         is_correct = True

@@ -168,6 +168,9 @@ class UserQuizReport(TimestampModel):
     )
     finished = models.BooleanField(default=False)
 
+    class Meta:
+        ordering = ['-created_at']
+
 
 class UserQuizQuestion(TimestampModel):
     quiz = models.ForeignKey(

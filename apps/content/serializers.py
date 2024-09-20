@@ -43,7 +43,6 @@ class TopicRetrieveSerializer(TopicSerializer, AbstractDescriptionSerializer):
 
 
 class DirectionWithNameSerializer(AbstractNameSerializer):
-
     class Meta:
         model = Direction
         fields = ['id', 'name']
@@ -78,12 +77,19 @@ class TopicSerializerWithSubject(TopicSerializer, UserPropertyMixin):
             return CourseWithNameSerializer(course, context=self.context).data
 
     def get_quiz_completion(self, obj):
-        quizzes = obj.quizzes.all()
-        if quizzes:
-            quiz = quizzes.first()
+        if obj.quizzes.exists():
+            quiz = obj.quizzes.first()
+            quiz_report = self.user.user_quiz_reports.filter(quiz_id=quiz.id)
+            if quiz_report.filter(finished=False).exists():
+                report_id = quiz_report.first().id
+            else:
+                report_id = quiz_report.first().id
             questions_amount = quiz.questions_amount
-            answered_count = self.user.user_quiz_questions.filter(Q(is_correct__isnull=False)
-                                                                  & Q(quiz_id=quiz.id)).count()
+            user_quiz_questions = self.user.user_quiz_questions.filter(
+                Q(is_correct__isnull=False) &
+                Q(quiz_id=quiz.id) &
+                Q(report_id=report_id))
+            answered_count = user_quiz_questions.count()
         else:
             questions_amount = 0
             answered_count = 0
@@ -140,6 +146,7 @@ class CourseDetailSerializer(CourseSerializer):
 
 class CourseSerializerWithoutChapters(AbstractNameSerializer):
     subject_info = serializers.SerializerMethodField()
+
     class Meta:
         model = Course
         fields = ['id', 'name', 'subject_info']
