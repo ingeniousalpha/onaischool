@@ -31,7 +31,7 @@ class EntranceExamView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
 
 
 class TopicQuizzesView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
-    queryset = Question.objects.all()
+    queryset = Question.objects.prefetch_related('user_quiz_questions').select_related('quiz').all()
     serializer_class = QuizQuestionsSerializer
     pagination_class = None
 
@@ -243,7 +243,9 @@ class FinishQuizView(PrivateSONRendererMixin, APIView):
 class QuizView(PrivateSONRendererMixin,
                viewsets.GenericViewSet,
                viewsets.mixins.ListModelMixin):
-    queryset = Question.objects.all()
+    queryset = (Question.objects.
+                prefetch_related('user_quiz_questions').
+                select_related('quiz').all())
 
     def get_serializer_class(self):
         actions = {
@@ -273,7 +275,10 @@ class QuizView(PrivateSONRendererMixin,
 
 
 class FinishQuiz(PrivateSONRendererMixin, viewsets.GenericViewSet):
-    queryset = Quiz.objects.all()
+    queryset = (Quiz.objects.
+                prefetch_related('user_quiz_reports').
+                prefetch_related('user_quiz_questions').
+                prefetch_related('questions').all())
 
     def finish_quiz(self, request, *args, **kwargs):
         instance = self.get_object()

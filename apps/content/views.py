@@ -13,7 +13,7 @@ from apps.users.models import MyTopic
 
 
 class DirectionView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
-    queryset = Direction.objects.all()
+    queryset = Direction.objects.prefetch_related('subjects').all()
     serializer_class = DirectionSerializer
 
     def get_serializer_class(self):
@@ -23,7 +23,11 @@ class DirectionView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
 
 
 class CourseView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
-    queryset = Course.objects.all()
+    queryset = (Course.objects.
+                select_related('subject').
+                select_related('subject__direction').
+                prefetch_related('chapters').
+                prefetch_related('chapters__topics').all())
     serializer_class = CourseSerializer
 
     def get_serializer_class(self):
@@ -33,7 +37,12 @@ class CourseView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
 
 
 class TopicView(PrivateSONRendererMixin, RetrieveAPIView):
-    queryset = Topic.objects.all()
+    queryset = (Topic.objects.
+                select_related('chapter').
+                select_related('chapter').
+                select_related('chapter__course').
+                select_related('chapter__course__subject').
+                select_related('chapter__course__subject__direction').all())
     serializer_class = TopicRetrieveSerializer
 
     def retrieve(self, request, *args, **kwargs):
@@ -46,7 +55,13 @@ class TopicView(PrivateSONRendererMixin, RetrieveAPIView):
 
 
 class MyTopicView(PrivateSONRendererMixin, ListCreateAPIView, DestroyAPIView):
-    queryset = MyTopic.objects.all()
+    queryset = (MyTopic.objects.
+                select_related('user').
+                select_related('topic__chapter').
+                select_related('topic__chapter__course').
+                select_related('topic__chapter__course__subject').
+                select_related('topic__chapter__course__subject__direction')
+    .all())
     serializer_class = MyTopicSerializer
 
     def create(self, request, *args, **kwargs):
