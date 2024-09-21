@@ -33,6 +33,12 @@ class UserCreationForm(forms.ModelForm):
         return user
 
 
+class ChildrenInline(admin.TabularInline):
+    model = User
+    fields = ('id', 'full_name', 'mobile_phone',)
+    readonly_fields = ('id', 'full_name', 'mobile_phone',)
+
+
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     list_display = ('id', 'mobile_phone', 'role', 'full_name', 'email', 'is_email_confirmed', 'is_staff',)
@@ -42,7 +48,7 @@ class UserAdmin(BaseUserAdmin):
     filter_horizontal = ('groups', 'user_permissions',)
     add_form = UserCreationForm
     ordering = ['-created_at']
-    inlines = []
+    inlines = [ChildrenInline]
 
     fieldsets = (
         (None, {
