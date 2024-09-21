@@ -294,9 +294,10 @@ class FinishQuiz(PrivateSONRendererMixin, viewsets.GenericViewSet):
         questions_amount = instance.questions_amount
         correct_questions = user_quiz_answer.filter(is_correct=True).count()
 
-        for uqa in user_quiz_answer.filter(Q(is_correct__isnull=True)).all():
-            uqa.is_correct = False
-            uqa.save(update_fields=['is_correct'])
+        # for uqa in user_quiz_answer.filter(Q(is_correct__isnull=True)).all():
+        #     uqa.is_correct = False
+        #     uqa.user_answer = None
+        #     uqa.save(update_fields=['is_correct', 'user_answer'])
 
         incorrect_questions = questions_amount - correct_questions
         data = {
@@ -305,7 +306,7 @@ class FinishQuiz(PrivateSONRendererMixin, viewsets.GenericViewSet):
             'used_hints': user_quiz_answer.filter(used_hints=True).count(),
             'viewed_answer': user_quiz_answer.filter(answer_viewed=True).count()
         }
-        user_quiz_report.finished = True
-        user_quiz_report.save(update_fields=['finished'])
+        # user_quiz_report.finished = True
+        # user_quiz_report.save(update_fields=['finished'])
 
         return Response(data)
