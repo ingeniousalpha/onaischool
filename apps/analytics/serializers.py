@@ -270,10 +270,11 @@ class QuestionSerializerWithHints(QuizQuestionsSerializer):
 class QuestionSerializerWithAnswer(QuizQuestionsSerializer):
     explanation_answer = serializers.SerializerMethodField()
     explanation_answer_image = serializers.SerializerMethodField()
+    explanation_correct_answer = serializers.SerializerMethodField()
 
     class Meta(QuizQuestionsSerializer.Meta):
         model = Question
-        fields = QuizQuestionsSerializer.Meta.fields + ['explanation_answer', 'explanation_answer_image']
+        fields = QuizQuestionsSerializer.Meta.fields + ['explanation_answer', 'explanation_answer_image', 'explanation_correct_answer']
 
     def get_explanation_answer(self, obj: Question) -> str:
         return obj.explanation_answer.translate()
@@ -283,6 +284,13 @@ class QuestionSerializerWithAnswer(QuizQuestionsSerializer):
         if obj.explanation_answer_image.translate():
             return request.build_absolute_uri(obj.explanation_answer_image.translate().url)
         return ''
+
+    def get_explanation_correct_answer(self, obj):
+        correct_answers = obj.answer_options.filter(is_correct=True).all()
+        correct_answer_text = ''
+        for correct_answer in correct_answers:
+            correct_answer_text += correct_answer.text.translate() + ' '
+        return correct_answer_text.strip()
 
 
 class QuizSerializer(serializers.ModelSerializer):

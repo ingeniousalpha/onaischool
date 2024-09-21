@@ -37,8 +37,8 @@ class TopicQuizzesView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
 
     def get_serializer_class(self):
         if self.action == "retrieve":
-            return QuizQuestionDetailSerializer
-        return QuizQuestionsSerializer
+            return QuestionSerializerWithAnswer
+        return QuestionSerializerWithAnswer
 
     def list(self, request, *args, **kwargs):
         queryset = super().get_queryset()
