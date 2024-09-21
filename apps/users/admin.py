@@ -37,6 +37,7 @@ class ChildrenInline(admin.TabularInline):
     model = User
     fields = ('id', 'full_name', 'mobile_phone',)
     readonly_fields = ('id', 'full_name', 'mobile_phone',)
+    extra = 0
 
 
 @admin.register(User)
