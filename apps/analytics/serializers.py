@@ -194,10 +194,15 @@ class QuizQuestionsSerializer(AbstractTitleSerializer, AbstractImageSerializer, 
     answers = serializers.SerializerMethodField()
     is_selected = serializers.SerializerMethodField()
     open_answer = serializers.SerializerMethodField()
+    is_answer_viewed = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
-        fields = ['id', 'title', 'image', 'explain_video', 'type', 'is_selected', 'answers', 'open_answer']
+        fields = [
+            'id', 'title', 'image', 'explain_video',
+            'type', 'is_selected', 'answers', 'open_answer',
+            'is_answer_viewed'
+        ]
 
     def get_explain_video(self, obj):
         return obj.explain_video.translate()
@@ -210,6 +215,12 @@ class QuizQuestionsSerializer(AbstractTitleSerializer, AbstractImageSerializer, 
     def get_is_selected(self, obj):
         if obj.user_quiz_questions.filter(Q(user=self.user) & Q(question_id=obj.id)).first().is_correct is not None:
             return True
+        return False
+
+    def get_is_answer_viewed(self, obj):
+        uqq = obj.user_quiz_questions.filter(Q(user=self.user) & Q(question_id=obj.id)).first()
+        if uqq:
+            return uqq.answer_viewed
         return False
 
     def get_open_answer(self, obj):
