@@ -9,7 +9,7 @@ from apps.analytics.models import Quiz, Question, AnswerOption, EntranceExam, En
 from apps.common.mixins import UserPropertyMixin
 from apps.common.pagination import PaginationForQuestions
 from apps.common.serializers import AbstractImageSerializer, AbstractTitleSerializer
-from apps.users.models import UserExamQuestion, UserExamResult
+from apps.users.models import UserExamQuestion, UserExamResult, UserQuizQuestion
 
 
 class ExamSubjectSerializer(AbstractTitleSerializer):
@@ -195,13 +195,14 @@ class QuizQuestionsSerializer(AbstractTitleSerializer, AbstractImageSerializer, 
     is_selected = serializers.SerializerMethodField()
     open_answer = serializers.SerializerMethodField()
     is_answer_viewed = serializers.SerializerMethodField()
+    show_report = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
         fields = [
             'id', 'title', 'image', 'explain_video',
             'type', 'is_selected', 'answers', 'open_answer',
-            'is_answer_viewed'
+            'is_answer_viewed', 'show_report',
         ]
 
     def get_explain_video(self, obj):
@@ -222,6 +223,14 @@ class QuizQuestionsSerializer(AbstractTitleSerializer, AbstractImageSerializer, 
         if uqq:
             return uqq.answer_viewed
         return False
+
+    def get_show_report(self, obj):
+        uqq = obj.user_quiz_questions.filter(user=self.user).first()
+        user_questions = UserQuizQuestion.objects.filter(user=self.user, quiz=uqq.quiz, report__finished=False)
+        if user_questions.count() == user_questions.filter(is_correct__isnull=False).count():
+            return True
+        return False
+
 
     def get_open_answer(self, obj):
         user = self.user

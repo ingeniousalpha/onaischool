@@ -124,11 +124,6 @@ class CheckAnswerView(PrivateSONRendererMixin, APIView):
             uqq.answers.clear()
         is_correct = True
         correct_answer_count = 0
-        show_report = False
-        if uqq.quiz.questions_amount == UserQuizQuestion.objects.filter(
-                user=user, quiz=uqq.quiz, report__finished=False, is_correct__isnull=False
-        ).count() + 1:
-            show_report = True
         for answer in answers:
             is_correct = True
             if answer.question.type == QuestionType.open_answer:
@@ -150,7 +145,6 @@ class CheckAnswerView(PrivateSONRendererMixin, APIView):
                 'answer_id': answer.id,
                 'user_answer': open_answer,
                 'is_correct': is_correct,
-                'show_report': show_report,
                 'life_count': 4
             })
             if is_correct:
@@ -160,6 +154,11 @@ class CheckAnswerView(PrivateSONRendererMixin, APIView):
         else:
             uqq.is_correct = False
         uqq.save(update_fields=['is_correct', 'user_answer'])
+
+        user_questions = UserQuizQuestion.objects.filter(user=user, quiz=uqq.quiz, report__finished=False)
+        if user_questions.count() == user_questions.filter(is_correct__isnull=False).count():
+            for d in data:
+                d['show_report'] = True
         return Response(data)
 
 
