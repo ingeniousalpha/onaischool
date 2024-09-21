@@ -188,10 +188,10 @@ class VerifyOTPSerializer(serializers.Serializer):
         return generate_access_and_refresh_tokens_for_user(instance)
 
     def validate(self, attrs):
-        if config.USE_DEFAULT_OTP and attrs['otp_code'] != config.DEFAULT_OTP:
-            raise InvalidOTP
+        if config.USE_DEFAULT_OTP and attrs['otp_code'] == config.DEFAULT_OTP:
+            return attrs
 
-        if not OTP.objects.filter(mobile_phone=self.mobile_phone, code=attrs['otp_code']).exists():
+        if not OTP.objects.filter(mobile_phone=attrs['mobile_phone'], code=attrs['otp_code']).exists():
             raise InvalidOTP
 
         return attrs
