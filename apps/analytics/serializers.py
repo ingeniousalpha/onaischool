@@ -208,7 +208,9 @@ class QuizQuestionsSerializer(AbstractTitleSerializer, AbstractImageSerializer, 
 
     def get_final_result(self, obj):
         if self.user.user_quiz_questions:
-            return self.user.user_quiz_questions.filter(question_id=obj.id, report__finished=False).first().is_correct
+            user_question = self.user.user_quiz_questions.filter(question_id=obj.id, report__finished=False).first()
+            return False if user_question.is_correct is None else user_question.is_correct
+        return False
 
     def get_explain_video(self, obj):
         return obj.explain_video.translate()
