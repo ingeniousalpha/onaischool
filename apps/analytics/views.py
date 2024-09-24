@@ -273,7 +273,8 @@ class QuizView(PrivateSONRendererMixin,
         instance = self.get_object()
         user = request.user
         user_quiz_answer = instance.user_quiz_questions.filter(Q(user=user) & Q(question_id=instance.id)).first()
-        user_quiz_answer.is_correct = False
+        if not user_quiz_answer.is_correct:
+            user_quiz_answer.is_correct = False
         user_quiz_answer.answer_viewed = True
         user_quiz_answer.save(update_fields=['is_correct', 'answer_viewed'])
         serializer = self.get_serializer(instance, context={"request": request})
