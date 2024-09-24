@@ -19,10 +19,15 @@ class SchoolSerializer(AbstractNameSerializer):
 
 class TopicSerializer(AbstractNameSerializer, AbstractImageSerializer):
     video_link = serializers.SerializerMethodField()
+    is_locked = serializers.SerializerMethodField()
+
 
     class Meta:
         model = Topic
-        fields = ['id', 'name', 'video_link', 'image']
+        fields = ['id', 'name', 'video_link', 'image', 'is_locked']
+
+    def get_is_locked(self, obj):
+        return False
 
     def get_video_link(self, obj):
         return obj.video_link.translate()
@@ -116,10 +121,14 @@ class ChapterSerializer(AbstractNameSerializer):
 
 class CourseSerializer(AbstractNameSerializer):
     quarters = serializers.SerializerMethodField()
+    is_locked = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
-        fields = ['id', 'name', 'grade', 'quarters']
+        fields = ['id', 'name', 'grade', 'quarters', 'is_locked']
+
+    def get_is_locked(self, obj):
+        return False
 
     def get_quarters(self, obj):
         chapters = obj.chapters.all().order_by('quarter', 'priority')
@@ -159,6 +168,7 @@ class CourseSerializerWithoutChapters(AbstractNameSerializer):
 
 
 class CourseListSerializer(AbstractNameSerializer):
+
     class Meta:
         model = Course
         fields = ['id', 'name', 'grade']

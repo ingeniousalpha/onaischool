@@ -2,22 +2,65 @@ import math
 import pandas as pd
 from django import forms
 from django.contrib import admin
+from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.core.exceptions import ValidationError
 from localized_fields.admin import LocalizedFieldsAdminMixin
 from adminsortable2.admin import SortableAdminMixin, SortableInlineAdminMixin
+
+from apps import Roles
 from apps.analytics.admin import QuizInline, ExamInline
 from apps.analytics.models import Quiz, Question, QuestionType, AnswerOption
 from apps.common.admin import ReadOnlyMixin
 from apps.content.models import *
+from apps.users.models import User
+
+
+class CourseAdminForm(forms.ModelForm):
+    enabled_courses = forms.ModelMultipleChoiceField(
+        queryset=User.objects.filter(role=Roles.STUDENT).all(),
+        required=False,
+        widget=FilteredSelectMultiple(verbose_name='Студенты', is_stacked=False)
+    )
+
+    class Meta:
+        model = Course
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super(CourseAdminForm, self).__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.fields['enabled_courses'].initial = self.instance.enabled_courses.all()
+        else:
+            self.fields['enabled_courses'].initial = []
+
+    def save(self, commit=True):
+        course = super(CourseAdminForm, self).save(commit=False)
+        if commit:
+            course.save()
+        course.enabled_courses.set(self.cleaned_data['enabled_courses'])
+        self.save_m2m()
+        return course
 
 
 class TopicAdminForm(forms.ModelForm):
     file = forms.FileField(required=False, help_text="Upload an Excel file to create questions.")
+    enabled_topics = forms.ModelMultipleChoiceField(
+        queryset=User.objects.filter(role=Roles.STUDENT).all(),
+        required=False,
+        widget=FilteredSelectMultiple(verbose_name='Студенты', is_stacked=False)
+    )
 
     class Meta:
         model = Topic
         fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super(TopicAdminForm, self).__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.fields['enabled_topics'].initial = self.instance.enabled_topics.all()
+        else:
+            self.fields['enabled_topics'].initial = []
 
     def save(self, commit=True):
         topic = super().save(commit=False)
@@ -38,6 +81,8 @@ class TopicAdminForm(forms.ModelForm):
         # Save the Topic instance again after processing, if commit=True
         if commit:
             topic.save()
+        topic.enabled_topics.set(self.cleaned_data['enabled_topics'])
+        self.save_m2m()
 
         return topic
 
@@ -174,6 +219,8 @@ class CourseAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     search_fields = ['name__ru', 'name__kk']
     list_filter = ('subject',)
     list_editable = ('priority',)
+    filter_horizontal = ['enabled_courses']
+    form = CourseAdminForm
     inlines = [QuizInline]
 
 
@@ -190,6 +237,7 @@ class TopicAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     list_display = ('id', 'name', 'description', 'chapter', 'priority')
     list_editable = ('priority',)
     search_fields = ['name__ru', 'name__kk']
+    filter_horizontal = ['enabled_topics']
     list_filter = ['chapter']
     form = TopicAdminForm
     inlines = [QuizInline]

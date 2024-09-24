@@ -43,6 +43,18 @@ class User(PermissionsMixin, AbstractBaseUser):
         related_name='students',
         verbose_name=_("Школа")
     )
+    enabled_courses = models.ManyToManyField(
+        Course,
+        blank=True,
+        related_name="enabled_courses",
+        verbose_name="Users"
+    )
+    enabled_topics = models.ManyToManyField(
+        Topic,
+        blank=True,
+        related_name="enabled_topics",
+        verbose_name="Users"
+    )
     grade = models.CharField(max_length=3, choices=Grades.choices, default=Grades.FIRST, verbose_name="Класс")
     role = models.CharField(max_length=50, choices=Roles.choices, default=Roles.STUDENT)
     is_active = models.BooleanField("Активный", default=True)
@@ -78,7 +90,7 @@ class User(PermissionsMixin, AbstractBaseUser):
     objects = UserManager()
 
     def __str__(self):
-        return str(self.mobile_phone or self.email)
+        return f"{self.full_name} {self.mobile_phone}"
 
     # @property
     # def username(self):
