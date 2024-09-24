@@ -145,7 +145,8 @@ class CheckAnswerView(PrivateSONRendererMixin, APIView):
                 'answer_id': answer.id,
                 'user_answer': open_answer,
                 'is_correct': is_correct,
-                'life_count': 4
+                'life_count': 4,
+                'show_report': False
             })
             if is_correct:
                 correct_answer_count += 1
