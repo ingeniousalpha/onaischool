@@ -196,14 +196,19 @@ class QuizQuestionsSerializer(AbstractTitleSerializer, AbstractImageSerializer, 
     open_answer = serializers.SerializerMethodField()
     is_answer_viewed = serializers.SerializerMethodField()
     show_report = serializers.SerializerMethodField()
+    final_result = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
         fields = [
             'id', 'title', 'image', 'explain_video',
             'type', 'is_selected', 'answers', 'open_answer',
-            'is_answer_viewed', 'show_report',
+            'is_answer_viewed', 'show_report', 'final_result'
         ]
+
+    def get_final_result(self, obj):
+        if self.user.user_quiz_questions:
+            return self.user.user_quiz_questions.filter(question_id=obj.id, report__finished=False).first().is_correct
 
     def get_explain_video(self, obj):
         return obj.explain_video.translate()
