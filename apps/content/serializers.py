@@ -17,7 +17,7 @@ class SchoolSerializer(AbstractNameSerializer):
         fields = ['id', 'name']
 
 
-class TopicSerializer(AbstractNameSerializer, AbstractImageSerializer):
+class TopicSerializer(AbstractNameSerializer, AbstractImageSerializer, UserPropertyMixin):
     video_link = serializers.SerializerMethodField()
     is_locked = serializers.SerializerMethodField()
 
@@ -27,7 +27,10 @@ class TopicSerializer(AbstractNameSerializer, AbstractImageSerializer):
         fields = ['id', 'name', 'video_link', 'image', 'is_locked']
 
     def get_is_locked(self, obj):
-        return False
+        if self.user.enabled_courses.filter(id=obj.chapter.course.id).exists():
+            return False
+        else:
+            return not self.user.enabled_topics.filter(id=obj.id).exists()
 
     def get_video_link(self, obj):
         return obj.video_link.translate()
@@ -119,7 +122,7 @@ class ChapterSerializer(AbstractNameSerializer):
         return TopicSerializer(obj.topics, many=True, context=self.context).data
 
 
-class CourseSerializer(AbstractNameSerializer):
+class CourseSerializer(AbstractNameSerializer, UserPropertyMixin):
     quarters = serializers.SerializerMethodField()
     is_locked = serializers.SerializerMethodField()
 
@@ -128,9 +131,11 @@ class CourseSerializer(AbstractNameSerializer):
         fields = ['id', 'name', 'grade', 'quarters', 'is_locked']
 
     def get_is_locked(self, obj):
-        return False
+        return not self.user.enabled_courses.filter(id=obj.id).exists()
 
     def get_quarters(self, obj):
+        if not self.user.enabled_courses.filter(id=obj.id).exists():
+            return []
         chapters = obj.chapters.all().order_by('quarter', 'priority')
         grouped_chapters = groupby(chapters, key=lambda c: c.quarter)
 
@@ -167,7 +172,7 @@ class CourseSerializerWithoutChapters(AbstractNameSerializer):
         return SubjectForMyCourseSerializer(obj.subject, many=False).data
 
 
-class CourseListSerializer(AbstractNameSerializer):
+class CourseListSerializer(AbstractNameSerializer, UserPropertyMixin):
     is_locked = serializers.SerializerMethodField()
 
     class Meta:
@@ -175,7 +180,7 @@ class CourseListSerializer(AbstractNameSerializer):
         fields = ['id', 'name', 'grade', 'is_locked']
 
     def get_is_locked(self, obj):
-        return False
+        return not self.user.enabled_courses.filter(id=obj.id).exists()
 
 
 class SubjectSerializer(AbstractNameSerializer):

@@ -46,13 +46,13 @@ class User(PermissionsMixin, AbstractBaseUser):
     enabled_courses = models.ManyToManyField(
         Course,
         blank=True,
-        related_name="enabled_courses",
+        related_name="enrolled_users",
         verbose_name="Users"
     )
     enabled_topics = models.ManyToManyField(
         Topic,
         blank=True,
-        related_name="enabled_topics",
+        related_name="enrolled_users",
         verbose_name="Users"
     )
     grade = models.CharField(max_length=3, choices=Grades.choices, default=Grades.FIRST, verbose_name="Класс")

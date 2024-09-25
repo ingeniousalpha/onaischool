@@ -17,7 +17,7 @@ from apps.users.models import User
 
 
 class CourseAdminForm(forms.ModelForm):
-    enabled_courses = forms.ModelMultipleChoiceField(
+    enrolled_users = forms.ModelMultipleChoiceField(
         queryset=User.objects.filter(role=Roles.STUDENT).all(),
         required=False,
         widget=FilteredSelectMultiple(verbose_name='Студенты', is_stacked=False)
@@ -30,22 +30,22 @@ class CourseAdminForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(CourseAdminForm, self).__init__(*args, **kwargs)
         if self.instance.pk:
-            self.fields['enabled_courses'].initial = self.instance.enabled_courses.all()
+            self.fields['enrolled_users'].initial = self.instance.enrolled_users.all()
         else:
-            self.fields['enabled_courses'].initial = []
+            self.fields['enrolled_users'].initial = []
 
     def save(self, commit=True):
         course = super(CourseAdminForm, self).save(commit=False)
         if commit:
             course.save()
-        course.enabled_courses.set(self.cleaned_data['enabled_courses'])
+        course.enrolled_users.set(self.cleaned_data['enrolled_users'])
         self.save_m2m()
         return course
 
 
 class TopicAdminForm(forms.ModelForm):
     file = forms.FileField(required=False, help_text="Upload an Excel file to create questions.")
-    enabled_topics = forms.ModelMultipleChoiceField(
+    enrolled_users = forms.ModelMultipleChoiceField(
         queryset=User.objects.filter(role=Roles.STUDENT).all(),
         required=False,
         widget=FilteredSelectMultiple(verbose_name='Студенты', is_stacked=False)
@@ -58,9 +58,9 @@ class TopicAdminForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(TopicAdminForm, self).__init__(*args, **kwargs)
         if self.instance.pk:
-            self.fields['enabled_topics'].initial = self.instance.enabled_topics.all()
+            self.fields['enrolled_users'].initial = self.instance.enrolled_users.all()
         else:
-            self.fields['enabled_topics'].initial = []
+            self.fields['enrolled_users'].initial = []
 
     def save(self, commit=True):
         topic = super().save(commit=False)
@@ -81,7 +81,7 @@ class TopicAdminForm(forms.ModelForm):
         # Save the Topic instance again after processing, if commit=True
         if commit:
             topic.save()
-        topic.enabled_topics.set(self.cleaned_data['enabled_topics'])
+        topic.enrolled_users.set(self.cleaned_data['enrolled_users'])
         self.save_m2m()
 
         return topic
@@ -219,7 +219,7 @@ class CourseAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     search_fields = ['name__ru', 'name__kk']
     list_filter = ('subject',)
     list_editable = ('priority',)
-    filter_horizontal = ['enabled_courses']
+    filter_horizontal = ['enrolled_users']
     form = CourseAdminForm
     inlines = [QuizInline]
 
@@ -237,7 +237,7 @@ class TopicAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     list_display = ('id', 'name', 'description', 'chapter', 'priority')
     list_editable = ('priority',)
     search_fields = ['name__ru', 'name__kk']
-    filter_horizontal = ['enabled_topics']
+    filter_horizontal = ['enrolled_users']
     list_filter = ['chapter']
     form = TopicAdminForm
     inlines = [QuizInline]
