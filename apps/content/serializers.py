@@ -168,10 +168,14 @@ class CourseSerializerWithoutChapters(AbstractNameSerializer):
 
 
 class CourseListSerializer(AbstractNameSerializer):
+    is_locked = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
-        fields = ['id', 'name', 'grade']
+        fields = ['id', 'name', 'grade', 'is_locked']
+
+    def get_is_locked(self, obj):
+        return False
 
 
 class SubjectSerializer(AbstractNameSerializer):
