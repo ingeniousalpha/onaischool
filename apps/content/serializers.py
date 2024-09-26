@@ -21,16 +21,12 @@ class TopicSerializer(AbstractNameSerializer, AbstractImageSerializer, UserPrope
     video_link = serializers.SerializerMethodField()
     is_locked = serializers.SerializerMethodField()
 
-
     class Meta:
         model = Topic
         fields = ['id', 'name', 'video_link', 'image', 'is_locked']
 
     def get_is_locked(self, obj):
-        if self.user.enabled_courses.filter(id=obj.chapter.course.id).exists():
-            return False
-        else:
-            return not self.user.enabled_topics.filter(id=obj.id).exists()
+        return not self.user.enabled_topics.filter(id=obj.id).exists()
 
     def get_video_link(self, obj):
         return obj.video_link.translate()

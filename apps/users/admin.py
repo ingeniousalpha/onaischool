@@ -1,6 +1,12 @@
 from django import forms
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import PasswordChangeForm as DjangoPasswordChangeForm
+from django.template.response import TemplateResponse
+from django.urls import reverse
+from django.utils.html import format_html
 
 from apps.authentication.services import validate_password_in_forms
 from .models import User, UserQuizQuestion, Avatar
@@ -17,7 +23,7 @@ class UserCreationForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ('email',)
+        fields = ('mobile_phone',)
 
     def clean_password2(self):
         # Check that the two password entries match
@@ -59,8 +65,8 @@ class UserChangeForm(forms.ModelForm):
         model = User
         fields = '__all__'
 
-    def init(self, *args, **kwargs):
-        super(UserChangeForm, self).init(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(UserChangeForm, self).__init__(*args, **kwargs)
         if self.instance.pk:
             self.fields['enabled_courses'].initial = self.instance.enabled_courses.all()
             self.fields['enabled_topics'].initial = self.instance.enabled_topics.all()
@@ -98,8 +104,8 @@ class UserAdmin(BaseUserAdmin):
                 'mobile_phone',
                 'email',
                 'full_name',
-                'password',
                 'role',
+                'display_password_link',
                 'is_superuser',
                 'is_active',
                 'is_staff',
@@ -116,7 +122,7 @@ class UserAdmin(BaseUserAdmin):
         (None, {
             'classes': ('wide',),
             'fields': (
-                'email',
+                'mobile_phone',
                 'password1',
                 'password2',
                 'role',
@@ -129,6 +135,46 @@ class UserAdmin(BaseUserAdmin):
             ),
         }),
     )
+    readonly_fields = ('display_password_link',)
+
+    def display_password_link(self, obj):
+        if obj.has_usable_password():
+            return format_html(
+                'Пароль не отображается. <a href="{}">Изменить пароль</a>',
+                reverse('admin:auth_user_password_change', args=[obj.pk])
+            )
+        else:
+            return format_html(
+                'Пароль не задан. <a href="{}">Установить пароль</a>',
+                reverse('admin:auth_user_password_change', args=[obj.pk])
+            )
+
+    display_password_link.short_description = 'Пароль'  # Name of the field in the admin form
+
+    # Update the change_view method to handle extra context for password change
+    def change_password(self, request, id, form_url=''):
+        print(11111)
+        user = get_object_or_404(User, pk=id)
+        print(user, ' 1111')
+        if request.method == 'POST':
+            form = self.change_password_form(user, request.POST)
+            if form.is_valid():
+                form.save()
+                return redirect(reverse('admin:auth_user_changelist'))
+        else:
+            form = self.change_password_form(user)
+
+        # Pass the user's mobile_phone or full_name to the template for proper display
+        context = {
+            'title': f'Изменить пароль: {user.full_name if user.full_name else user.mobile_phone}',
+            'form': form,
+            'is_popup': False,
+            'opts': self.model._meta,
+            'original': user,
+            'admin_site': self.admin_site,
+        }
+
+        return TemplateResponse(request, 'admin/auth/user/change_password.html', context)
 
 
 admin.site.register(Avatar)
