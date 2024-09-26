@@ -66,7 +66,14 @@ class QuizAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
 
 @admin.register(Question)
 class QuestionAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
-    fields = ('title', 'image', 'quiz', 'type', 'explain_video')
+    fields = (
+        'title',
+        'image',
+        'quiz',
+        'type',
+        'explain_video',
+        'explanation_answer',
+    )
     search_fields = ('title__ru', 'title__kk')
     list_display = ('id', 'title', 'quiz',)
     list_filter = ('quiz',)
