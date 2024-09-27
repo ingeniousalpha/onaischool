@@ -3,7 +3,8 @@ from django.utils.translation import gettext_lazy as _
 from localized_fields.fields import LocalizedTextField, LocalizedFileField
 
 from apps.common.models import AbstractTitleModel
-from apps.content.models import Topic, Subject, Course, Direction
+from apps.content import Quarter
+from apps.content.models import Topic, Subject, Course, Direction, Chapter
 
 
 class TestType(models.TextChoices):
@@ -87,6 +88,7 @@ class Question(AbstractTitleModel):
         null=True,
         blank=True,
     )
+    level = models.IntegerField(default=1)
 
     quiz = models.ForeignKey(
         Quiz,
@@ -150,7 +152,7 @@ class EntranceExam(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="assessments"
+        related_name="entrance_exams"
     )
     duration = models.IntegerField(verbose_name="Длительность", default=0)
 

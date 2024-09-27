@@ -1,18 +1,21 @@
 from django.db.models import Q
 from django.shortcuts import render
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
 from django.utils import timezone
 
 from apps.analytics.exceptions import AnswerDoesntExists, ExamNotFound, QuestionNotFound, YouCannotFinishQuiz
 from apps.analytics.models import Quiz, Question, AnswerOption, EntranceExam, ExamAnswerOption, QuestionType
 from apps.analytics.serializers import QuizSerializer, QuizQuestionsSerializer, QuizQuestionDetailSerializer, \
     CheckAnswerSerializer, EntranceExamSerializer, ExtranceExamDetailSerializer, EntranceCheckAnswerSerializer, \
-    FinishExamSerializer, QuestionSerializerWithHints, QuestionSerializerWithAnswer
+    FinishExamSerializer, QuestionSerializerWithHints, QuestionSerializerWithAnswer, AssessmentSubjectsSerializer, \
+    AssessmentCreateSerializer, AssessmentRetrieveSerializer
 from apps.common.mixins import PrivateSONRendererMixin
+from apps.content.models import Subject
+from apps.content.serializers import SubjectSerializer
 from apps.users.models import UserQuizQuestion, UserExamQuestion, UserQuizReport
 
 
@@ -317,3 +320,27 @@ class FinishQuiz(PrivateSONRendererMixin, viewsets.GenericViewSet):
         # user_quiz_report.save(update_fields=['finished'])
 
         return Response(data)
+
+
+class AssessmentView(PrivateSONRendererMixin, GenericViewSet):
+    serializer_class = AssessmentSubjectsSerializer
+    pagination_class = None
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return AssessmentRetrieveSerializer
+        elif self.action == 'create':
+            return AssessmentCreateSerializer
+        return AssessmentSubjectsSerializer
+
+    def list(self, request, *args, **kwargs):
+        subjects = Subject.objects.filter(enable_sor_soch=True)
+        serializer = SubjectSerializer(subjects, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

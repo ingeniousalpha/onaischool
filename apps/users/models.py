@@ -13,6 +13,7 @@ from .. import Grades, Roles
 from ..analytics.models import Question, AnswerOption, Quiz, EntranceExam, ExamQuestion, ExamAnswerOption, \
     EntranceExamPerDay
 from ..common.models import TimestampModel
+from ..content import Quarter
 from ..content.models import School, Course, Topic
 
 
@@ -284,3 +285,66 @@ class UserExamResult(TimestampModel):
 
     class Meta:
         ordering = ['-created_at']
+
+
+class UserAssessment(models.Model):
+    ASSESSMENT_TYPE_CHOICES = [
+        ('SOR', 'Суммативное Оценивание за Раздел (СОР)'),
+        ('SOCH', 'Суммативное Оценивание за Четверть (СОЧ)')
+    ]
+    uuid = models.UUIDField(default=uuid_lib.uuid4, editable=False, unique=True)
+    subject = models.ForeignKey("content.Subject", on_delete=models.CASCADE, related_name='assessments', verbose_name='Предмет')
+    quarter = models.CharField(max_length=10, choices=Quarter.choices, null=True, blank=True, verbose_name="Четверть")
+    chapter = models.ForeignKey("content.Chapter", on_delete=models.CASCADE, null=True, blank=True, related_name='assessments', verbose_name='Раздел')
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="user_assessments")
+    user = models.ForeignKey(
+        User,
+        verbose_name="Пользователь",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="user_assessments")
+    assessment_type = models.CharField(max_length=4, choices=ASSESSMENT_TYPE_CHOICES, verbose_name='Тип оценивания')
+    level = models.IntegerField(default=1)
+    questions = models.ManyToManyField(Question)
+    start_datetime = models.DateTimeField(_("Время начала"), auto_now_add=True, db_index=True)
+    end_datetime = models.DateTimeField(null=True, blank=True, verbose_name='Время окончания')
+    is_finished = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.assessment_type} {self.subject.name.ru}"
+
+
+class UserAssessmentResult(TimestampModel):
+    user = models.ForeignKey(
+        User,
+        verbose_name="Пользователь",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="user_assessment_results")
+    assessment = models.ForeignKey(
+        UserAssessment,
+        verbose_name="Сор/Соч",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="user_assessment_results")
+    question = models.ForeignKey(
+        Question,
+        on_delete=models.CASCADE,
+        null=False,
+        related_name='user_assessment_results'
+    )
+    answers = models.ManyToManyField(
+        AnswerOption,
+        blank=True,
+        related_name='user_assessment_results'
+    )
+    user_answer = models.CharField(max_length=100, null=True, blank=True)
+    is_correct = models.BooleanField(null=True, blank=True)

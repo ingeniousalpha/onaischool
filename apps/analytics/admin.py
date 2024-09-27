@@ -10,6 +10,7 @@ from apps.analytics.models import Question, Quiz, AnswerOption, EntranceExam, En
 from apps.analytics.utils import regex_options
 
 
+
 class QuizInline(admin.StackedInline):
     model = Quiz
     fields = ('id', 'type', 'questions_amount')

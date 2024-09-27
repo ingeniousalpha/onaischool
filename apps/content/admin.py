@@ -36,10 +36,14 @@ class CourseAdminForm(forms.ModelForm):
 
     def save(self, commit=True):
         course = super(CourseAdminForm, self).save(commit=False)
+        if course.pk is None:
+            course.save()
         if commit:
             course.save()
-        course.enrolled_users.set(self.cleaned_data['enrolled_users'])
-        self.save_m2m()
+
+        if 'enrolled_users' in self.cleaned_data:
+            course.enrolled_users.set(self.cleaned_data['enrolled_users'])  # Явная установка M2M поля
+
         return course
 
 

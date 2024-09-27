@@ -39,6 +39,9 @@ class Direction(PriorityModel, AbstractRequiredNameModel, AbstractRequiredDescri
 class Subject(PriorityModel, AbstractRequiredNameModel):
     direction = models.ForeignKey(Direction, verbose_name="Направление",
                                   on_delete=models.SET_NULL, null=True, blank=True, related_name="subjects")
+    enable_sor_soch = models.BooleanField(default=False, verbose_name="Сор/Соч разрешен")
+    sor_question_count = models.IntegerField(default=0, verbose_name="СОР(Суммативное Оценивание за Раздел) кол-во")
+    soch_question_count = models.IntegerField(default=0, verbose_name="СОЧ(Суммативное Оценивание за Четверть) кол-во")
 
     class Meta:
         verbose_name = _("Предмет")

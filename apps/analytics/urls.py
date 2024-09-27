@@ -2,7 +2,7 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter
 
 from apps.analytics.views import TopicQuizzesView, CheckAnswerView, EntranceExamView, EntranceExamCheckAnswerView, \
-    FinishEntranceExamView, FinishQuizView, QuizView, FinishQuiz
+    FinishEntranceExamView, FinishQuizView, QuizView, FinishQuiz, AssessmentView
 
 urlpatterns = [
     path('exam-check-answer', EntranceExamCheckAnswerView.as_view()),
@@ -28,6 +28,7 @@ urlpatterns = [
 
 router = DefaultRouter()
 router.register('quiz', TopicQuizzesView, basename='topic-quizzes-view')
+router.register('assessment', AssessmentView, basename='assessment-view')
 router.register('entrance-exams', EntranceExamView, basename='entrance-exam-view')
 
 

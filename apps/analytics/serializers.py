@@ -1,15 +1,19 @@
+from collections import defaultdict
 from itertools import groupby
 
 from django.db.models import Q
 from rest_framework import serializers
 from django.utils import timezone
 
+from apps.analytics.exceptions import InvalidAssessmentInput
 from apps.analytics.models import Quiz, Question, AnswerOption, EntranceExam, EntranceExamSubject, ExamQuestion, \
     ExamAnswerOption, EntranceExamPerDay, QuestionType
 from apps.common.mixins import UserPropertyMixin
 from apps.common.pagination import PaginationForQuestions
-from apps.common.serializers import AbstractImageSerializer, AbstractTitleSerializer
-from apps.users.models import UserExamQuestion, UserExamResult, UserQuizQuestion
+from apps.common.serializers import AbstractImageSerializer, AbstractTitleSerializer, AbstractNameSerializer
+from apps.content.models import Subject, Chapter, Course
+from apps.content.serializers import SubjectSerializer
+from apps.users.models import UserExamQuestion, UserExamResult, UserQuizQuestion, UserAssessment, UserAssessmentResult
 
 
 class ExamSubjectSerializer(AbstractTitleSerializer):
@@ -182,10 +186,27 @@ class AnswersSerializer(AbstractImageSerializer, UserPropertyMixin):
 
         if user.is_authenticated:
             question = obj.question
-            user_quiz_question = question.user_quiz_questions.filter(Q(user=self.user) & Q(report__finished=False)).first()
+            user_quiz_question = question.user_quiz_questions.filter(
+                Q(user=self.user) & Q(report__finished=False)).first()
             if user_quiz_question:
                 report_id = user_quiz_question.report.id
                 return obj.user_quiz_questions.filter(Q(user=user) & Q(report_id=report_id)).exists()
+        return False
+
+
+class AssessmentAnswerSerializer(AnswersSerializer):
+    class Meta(AnswersSerializer.Meta):
+        fields = AnswersSerializer.Meta.fields
+
+    def get_selected(self, obj):
+        user = self.user
+        if user.is_authenticated:
+            question = obj.question
+            user_assessment_question = question.user_assessment_results.filter(
+                Q(user=self.user) & Q(assessment__is_finished=False)).first()
+            if user_assessment_question:
+                assessment_id = user_assessment_question.assessment.id
+                return obj.user_assessment_results.filter(Q(user=user) & Q(assessment_id=assessment_id)).exists()
         return False
 
 
@@ -238,11 +259,59 @@ class QuizQuestionsSerializer(AbstractTitleSerializer, AbstractImageSerializer, 
             return True
         return False
 
-
     def get_open_answer(self, obj):
         user = self.user
         if obj.type == QuestionType.open_answer and obj.user_quiz_questions.filter(user=user).exists():
             uqq = obj.user_quiz_questions.filter(user=user).first()
+            return {
+                "is_correct": uqq.is_correct,
+                "user_answer": uqq.user_answer,
+            }
+        return {}
+
+
+class AssessmentQuestionSerializer(AbstractImageSerializer, AbstractTitleSerializer, UserPropertyMixin):
+    answers = serializers.SerializerMethodField()
+    is_selected = serializers.SerializerMethodField()
+    open_answer = serializers.SerializerMethodField()
+    show_report = serializers.SerializerMethodField()
+    final_result = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Question
+        fields = [
+            'id', 'title', 'image',
+            'type', 'is_selected', 'answers', 'open_answer',
+            'show_report', 'final_result'
+        ]
+
+    def get_final_result(self, obj):
+        if self.user.user_assessment_results:
+            user_question = self.user.user_assessment_results.filter(question_id=obj.id, assessment__is_finished=False).first()
+            return False if user_question.is_correct is None else user_question.is_correct
+        return False
+
+    def get_answers(self, obj):
+        if obj.type == QuestionType.open_answer:
+            return []
+        return AssessmentAnswerSerializer(obj.answer_options, many=True, context=self.context).data
+
+    def get_is_selected(self, obj):
+        if obj.user_assessment_results.filter(Q(user=self.user) & Q(question_id=obj.id)).first().is_correct is not None:
+            return True
+        return False
+
+    def get_show_report(self, obj):
+        uqq = obj.user_assessment_results.filter(user=self.user).first()
+        user_questions = UserAssessmentResult.objects.filter(user=self.user, assessment__is_finished=False)
+        if user_questions.count() == user_questions.filter(is_correct__isnull=False).count():
+            return True
+        return False
+
+    def get_open_answer(self, obj):
+        user = self.user
+        if obj.type == QuestionType.open_answer and obj.user_assessment_results.filter(user=user).exists():
+            uqq = obj.user_assessment_results.filter(user=user).first()
             return {
                 "is_correct": uqq.is_correct,
                 "user_answer": uqq.user_answer,
@@ -281,7 +350,8 @@ class QuestionSerializerWithAnswer(QuizQuestionsSerializer):
 
     class Meta(QuizQuestionsSerializer.Meta):
         model = Question
-        fields = QuizQuestionsSerializer.Meta.fields + ['explanation_answer', 'explanation_answer_image', 'explanation_correct_answer']
+        fields = QuizQuestionsSerializer.Meta.fields + ['explanation_answer', 'explanation_answer_image',
+                                                        'explanation_correct_answer']
 
     def get_explanation_answer(self, obj: Question) -> str:
         return obj.explanation_answer.translate()
@@ -325,3 +395,95 @@ class EntranceCheckAnswerSerializer(serializers.Serializer):
 class FinishExamSerializer(serializers.Serializer):
     exam_id = serializers.IntegerField()
     day = serializers.IntegerField()
+
+
+class SubjectAssessmentSerializer(AbstractNameSerializer):
+    chapters = serializers.SerializerMethodField()
+    courses = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Subject
+        fields = ['id', 'name', 'chapters', 'courses']
+
+    def get_chapters(self, obj):
+        return []
+
+    def get_courses(self, obj):
+        return []
+
+
+class GroupedAssessmentSerializer(serializers.Serializer):
+    assessment_type = serializers.CharField()
+    subjects = serializers.SerializerMethodField()
+
+
+class AssessmentSubjectsSerializer(serializers.Serializer):
+    subjects = serializers.SerializerMethodField()
+
+    def get_subjects(self, obj):
+        return SubjectSerializer(Subject.objects.filter(enable_sor_soch=True).all(), many=True,
+                                 context=self.context).data
+
+
+class AssessmentCreateSerializer(serializers.ModelSerializer, UserPropertyMixin):
+    subject_id = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all())
+    chapter_id = serializers.PrimaryKeyRelatedField(queryset=Chapter.objects.all(), required=False)
+    course_id = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
+
+    class Meta:
+        model = UserAssessment
+        fields = ['user', 'subject_id', 'assessment_type', 'chapter_id', 'quarter', 'level', 'course_id']
+
+    def validate(self, attrs):
+        assessment_type = attrs['assessment_type']
+        if assessment_type == 'SOR' and not attrs.get('chapter_id'):
+            raise InvalidAssessmentInput
+        elif assessment_type == 'SOCH' and not attrs.get('quarter'):
+            raise InvalidAssessmentInput
+        return attrs
+
+    def generate_assessment_questions(self, obj):
+        questions_count = obj.subject.sor_question_count
+        questions_query = Question.objects.none()
+        if obj.assessment_type == 'SOR':
+            questions_query = Question.objects.filter(
+                quiz__topic__chapter=obj.chapter,
+                level=obj.level
+            )
+        elif obj.assessment_type == 'SOCH':
+            questions_query = Question.objects.filter(
+                quiz__topic__chapter__quarter=obj.quarter,
+                level=obj.level
+            )
+        return questions_query.prefetch_related('quiz__topic__chapter').order_by('?')[:questions_count]
+
+    def to_representation(self, instance):
+        return {
+            'id': instance.uuid,
+            'questions': AssessmentQuestionSerializer(instance.questions, many=True, context=self.context).data
+        }
+
+    def create(self, validated_data):
+        instance = UserAssessment.objects.create(user=self.user,
+                                                 assessment_type=validated_data['assessment_type'],
+                                                 chapter_id=validated_data.get('chapter_id').id if validated_data.get(
+                                                     'chapter_id') else None,
+                                                 subject_id=validated_data['subject_id'].id,
+                                                 quarter=validated_data.get('quarter'),
+                                                 start_datetime=timezone.now(),
+                                                 level=validated_data['level'],
+                                                 course_id=validated_data['course_id'].id)
+
+        questions = self.generate_assessment_questions(instance)
+        instance.questions.set(questions)
+        user_assessment_results = [
+            UserAssessmentResult(user=self.user, assessment=instance, question=question)
+            for question in questions
+        ]
+        UserAssessmentResult.objects.bulk_create(user_assessment_results)
+
+        return instance
+
+
+class AssessmentRetrieveSerializer(serializers.Serializer):
+    ...

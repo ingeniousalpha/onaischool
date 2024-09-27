@@ -89,7 +89,7 @@ class UserAdmin(BaseUserAdmin):
     list_display = ('id', 'mobile_phone', 'role', 'full_name', 'email', 'is_email_confirmed', 'is_staff')
     list_filter = ('is_staff',)
     list_display_links = ('id', 'mobile_phone', 'email', 'is_staff',)
-    search_fields = ('email', 'uuid', 'mobile_phone')
+    search_fields = ('email', 'uuid', 'mobile_phone', 'full_name', 'parent__mobile_phone')
     filter_horizontal = ('groups', 'user_permissions', 'enabled_courses', 'enabled_topics')
     add_form = UserCreationForm
     form = UserChangeForm
@@ -153,9 +153,7 @@ class UserAdmin(BaseUserAdmin):
 
     # Update the change_view method to handle extra context for password change
     def change_password(self, request, id, form_url=''):
-        print(11111)
         user = get_object_or_404(User, pk=id)
-        print(user, ' 1111')
         if request.method == 'POST':
             form = self.change_password_form(user, request.POST)
             if form.is_valid():
