@@ -12,11 +12,11 @@ from apps.analytics.models import Quiz, Question, AnswerOption, EntranceExam, Ex
 from apps.analytics.serializers import QuizSerializer, QuizQuestionsSerializer, QuizQuestionDetailSerializer, \
     CheckAnswerSerializer, EntranceExamSerializer, ExtranceExamDetailSerializer, EntranceCheckAnswerSerializer, \
     FinishExamSerializer, QuestionSerializerWithHints, QuestionSerializerWithAnswer, AssessmentSubjectsSerializer, \
-    AssessmentCreateSerializer, AssessmentRetrieveSerializer
+    AssessmentCreateSerializer, AssessmentQuestionSerializer
 from apps.common.mixins import PrivateSONRendererMixin
 from apps.content.models import Subject
 from apps.content.serializers import SubjectSerializer
-from apps.users.models import UserQuizQuestion, UserExamQuestion, UserQuizReport
+from apps.users.models import UserQuizQuestion, UserExamQuestion, UserQuizReport, UserAssessmentResult, UserAssessment
 
 
 class EntranceExamView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
@@ -83,7 +83,7 @@ class TopicQuizzesView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
                                              context={"request": request})
 
             return Response({'quiz_id': quiz.id,
-                            'questions': serializer.data})
+                             'questions': serializer.data})
         return Response([])
 
     def retrieve(self, request, *args, **kwargs):
@@ -122,7 +122,8 @@ class CheckAnswerView(PrivateSONRendererMixin, APIView):
         if not answers.exists():
             raise AnswerDoesntExists
         data = []
-        uqq = UserQuizQuestion.objects.filter(Q(user=user) & Q(question_id=question_id) & Q(report__finished=False)).first()
+        uqq = UserQuizQuestion.objects.filter(
+            Q(user=user) & Q(question_id=question_id) & Q(report__finished=False)).first()
         if uqq:
             uqq.answers.clear()
         is_correct = True
@@ -242,13 +243,6 @@ class FinishEntranceExamView(PrivateSONRendererMixin, APIView):
         return Response(resp_data)
 
 
-class FinishQuizView(PrivateSONRendererMixin, APIView):
-    serializer_class = None
-
-    def post(self, request, *args, **kwargs):
-        return Response({})
-
-
 class QuizView(PrivateSONRendererMixin,
                viewsets.GenericViewSet,
                viewsets.mixins.ListModelMixin):
@@ -323,19 +317,28 @@ class FinishQuiz(PrivateSONRendererMixin, viewsets.GenericViewSet):
 
 
 class AssessmentView(PrivateSONRendererMixin, GenericViewSet):
+    lookup_field = 'uuid'
+    queryset = UserAssessment.objects.all()
     serializer_class = AssessmentSubjectsSerializer
     pagination_class = None
 
     def get_serializer_class(self):
         if self.action == "retrieve":
-            return AssessmentRetrieveSerializer
+            return AssessmentQuestionSerializer
         elif self.action == 'create':
             return AssessmentCreateSerializer
         return AssessmentSubjectsSerializer
 
+    def retrieve(self, request, *args, **kwargs):
+        assessment = self.get_object()
+        serializer = self.get_serializer(data=assessment.questions, many=True)
+        serializer.is_valid()
+        return Response(serializer.data)
+
     def list(self, request, *args, **kwargs):
         subjects = Subject.objects.filter(enable_sor_soch=True)
-        serializer = SubjectSerializer(subjects, many=True, context={'request': request})
+        serializer = SubjectSerializer(subjects, many=True, context={'request': request,
+                                                                     'assessment_view': True})
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
@@ -344,3 +347,109 @@ class AssessmentView(PrivateSONRendererMixin, GenericViewSet):
             serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AssessmentCheckAnswerView(PrivateSONRendererMixin, APIView):
+    serializer_class = CheckAnswerSerializer
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        serializer = CheckAnswerSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer_data = serializer.validated_data
+        assessment_uuid = kwargs.get('uuid')
+        options = serializer_data.get('options', [])
+        question_id = serializer_data.get('question_id')
+        open_answer = serializer_data.get('answer', None)
+
+        if not options and not open_answer:
+            return Response({'error': 'No options provided'}, status=400)
+
+        answers = AnswerOption.objects.filter(
+            Q(id__in=options,
+              question_id=question_id)
+            |
+            Q(question_id=question_id,
+              question__type=QuestionType.open_answer)
+        )
+        if not answers.exists():
+            raise AnswerDoesntExists
+        data = []
+        uqq = UserAssessmentResult.objects.filter(
+            Q(user=user) & Q(question_id=question_id) & Q(assessment__uuid=assessment_uuid)).first()
+        if uqq:
+            uqq.answers.clear()
+        is_correct = True
+        correct_answer_count = 0
+        for answer in answers:
+            is_correct = True
+            if answer.question.type == QuestionType.open_answer:
+                uqq.user_answer = open_answer
+                if not open_answer:
+                    is_correct = False
+                elif answer.text.ru.lower() == open_answer.lower():
+                    uqq.answers.add(answer.id)
+                    uqq.is_correct = True
+                else:
+                    is_correct = False
+            else:
+                uqq.answers.add(answer.id)
+                if not answer.is_correct:
+                    is_correct = False
+                uqq.updated_at = timezone.now()
+                uqq.save(update_fields=['updated_at'])
+            data.append({
+                'answer_id': answer.id,
+                'user_answer': open_answer,
+                'is_correct': is_correct,
+                'life_count': 4,
+                'show_report': False
+            })
+            if is_correct:
+                correct_answer_count += 1
+        if answers.count() == correct_answer_count:
+            uqq.is_correct = is_correct
+            print('is_correct')
+        else:
+            uqq.is_correct = False
+        uqq.save(update_fields=['is_correct', 'user_answer'])
+
+        user_questions = UserAssessmentResult.objects.filter(user=user, assessment__uuid=assessment_uuid)
+        if user_questions.count() == user_questions.filter(is_correct__isnull=False).count():
+            for d in data:
+                d['show_report'] = True
+        return Response(data)
+
+
+class FinishAssessmentView(PrivateSONRendererMixin, viewsets.GenericViewSet):
+    queryset = (UserAssessment.objects.all())
+    lookup_field = 'uuid'
+
+    def finish_assessment(self, request, *args, **kwargs):
+        user_assessment = self.get_object()
+        user = request.user
+        print(user.id)
+        print(user_assessment.id)
+        if user_assessment.user != user:
+            raise YouCannotFinishQuiz
+        if not user_assessment.end_datetime:
+            user_assessment.end_datetime = timezone.now()
+        user_quiz_answer = user_assessment.user_assessment_results.filter(user=user)
+        print(user_quiz_answer.filter(is_correct=True).count())
+
+        questions_amount = user_assessment.subject.sor_question_count
+        correct_questions = user_quiz_answer.filter(is_correct=True).count()
+
+        incorrect_questions = questions_amount - correct_questions
+        duration = user_assessment.end_datetime - user_assessment.start_datetime
+        duration_seconds = duration.total_seconds()
+        duration_minutes = duration_seconds / 60
+        data = {
+            'correct_questions': correct_questions,
+            'incorrect_questions': incorrect_questions,
+            'duration': round(duration_minutes, 2),
+        }
+        # user_assessment.is_finished = True
+        # user_assessment.save(update_fields=['is_finished'])
+
+        return Response(data)

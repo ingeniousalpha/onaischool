@@ -302,7 +302,6 @@ class AssessmentQuestionSerializer(AbstractImageSerializer, AbstractTitleSeriali
         return False
 
     def get_show_report(self, obj):
-        uqq = obj.user_assessment_results.filter(user=self.user).first()
         user_questions = UserAssessmentResult.objects.filter(user=self.user, assessment__is_finished=False)
         if user_questions.count() == user_questions.filter(is_correct__isnull=False).count():
             return True
@@ -483,7 +482,3 @@ class AssessmentCreateSerializer(serializers.ModelSerializer, UserPropertyMixin)
         UserAssessmentResult.objects.bulk_create(user_assessment_results)
 
         return instance
-
-
-class AssessmentRetrieveSerializer(serializers.Serializer):
-    ...

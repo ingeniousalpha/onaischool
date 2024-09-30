@@ -2,13 +2,16 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter
 
 from apps.analytics.views import TopicQuizzesView, CheckAnswerView, EntranceExamView, EntranceExamCheckAnswerView, \
-    FinishEntranceExamView, FinishQuizView, QuizView, FinishQuiz, AssessmentView
+    FinishEntranceExamView, QuizView, FinishQuiz, AssessmentView, AssessmentCheckAnswerView, FinishAssessmentView
 
 urlpatterns = [
     path('exam-check-answer', EntranceExamCheckAnswerView.as_view()),
     path('finish-exam', FinishEntranceExamView.as_view()),
 
     path('check-answer', CheckAnswerView.as_view()),
+    path('assessment-check-answer/<uuid:uuid>', AssessmentCheckAnswerView.as_view()),
+    path('finish-assessment/<uuid:uuid>', FinishAssessmentView.as_view({'post': 'finish_assessment'}), name='finish-assessment'),
+
     path(
         'show-hints/<int:pk>',
         QuizView.as_view({'get': 'show_hints'}),

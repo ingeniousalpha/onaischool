@@ -130,7 +130,8 @@ class CourseSerializer(AbstractNameSerializer, UserPropertyMixin):
         return not self.user.enabled_courses.filter(id=obj.id).exists()
 
     def get_quarters(self, obj):
-        if not self.user.enabled_courses.filter(id=obj.id).exists():
+        assessment_view = self.context.get('assessment_view', False)
+        if not self.user.enabled_courses.filter(id=obj.id).exists() and not assessment_view:
             return []
         chapters = obj.chapters.all().order_by('quarter', 'priority')
         grouped_chapters = groupby(chapters, key=lambda c: c.quarter)
