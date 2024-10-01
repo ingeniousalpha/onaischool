@@ -8,15 +8,17 @@ from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
 from django.utils import timezone
 
 from apps.analytics.exceptions import AnswerDoesntExists, ExamNotFound, QuestionNotFound, YouCannotFinishQuiz
-from apps.analytics.models import Quiz, Question, AnswerOption, EntranceExam, ExamAnswerOption, QuestionType
+from apps.analytics.models import Quiz, Question, AnswerOption, EntranceExam, ExamAnswerOption, QuestionType, \
+    DiagnosticExam, DiagnosticExamAnswerOption
 from apps.analytics.serializers import QuizSerializer, QuizQuestionsSerializer, QuizQuestionDetailSerializer, \
     CheckAnswerSerializer, EntranceExamSerializer, ExtranceExamDetailSerializer, EntranceCheckAnswerSerializer, \
     FinishExamSerializer, QuestionSerializerWithHints, QuestionSerializerWithAnswer, AssessmentSubjectsSerializer, \
-    AssessmentCreateSerializer, AssessmentQuestionSerializer
+    AssessmentCreateSerializer, AssessmentQuestionSerializer, DiagnosticExamSerializer, DiagnosticExamQuestionSerializer
 from apps.common.mixins import PrivateSONRendererMixin
 from apps.content.models import Subject
 from apps.content.serializers import SubjectSerializer
-from apps.users.models import UserQuizQuestion, UserExamQuestion, UserQuizReport, UserAssessmentResult, UserAssessment
+from apps.users.models import UserQuizQuestion, UserExamQuestion, UserQuizReport, UserAssessmentResult, UserAssessment, \
+    UserDiagnosticsResult
 
 
 class EntranceExamView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
@@ -31,6 +33,43 @@ class EntranceExamView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
         if self.action == "retrieve":
             return ExtranceExamDetailSerializer
         return EntranceExamSerializer
+
+
+class DiagnosticExamView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
+    queryset = DiagnosticExam.objects.all()
+    serializer_class = DiagnosticExamSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return super().get_queryset()
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return DiagnosticExamQuestionSerializer
+        return DiagnosticExamSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        diagnostic_exam = self.get_object()
+        if diagnostic_exam:
+            user = self.request.user
+            user_diagnostic_questions = user.user_diagnostic_results.filter(diagnostic_exam_id=diagnostic_exam.id).order_by('id')
+            if user_diagnostic_questions.count() == diagnostic_exam.questions_amount:
+                questions = [uqq.question for uqq in user_diagnostic_questions]
+            else:
+                questions = diagnostic_exam.diagnostic_exam_questions.all()[:diagnostic_exam.questions_amount]
+                for question in questions:
+                    instance, created = UserDiagnosticsResult.objects.get_or_create(
+                        diagnostic_exam=diagnostic_exam,
+                        user=user,
+                        question=question,
+                    )
+            serializer = self.get_serializer(questions,
+                                             many=True,
+                                             context={"request": request})
+
+            return Response({'id': diagnostic_exam.id,
+                             'questions': serializer.data})
+        return Response([])
 
 
 class TopicQuizzesView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
@@ -164,6 +203,55 @@ class CheckAnswerView(PrivateSONRendererMixin, APIView):
         if user_questions.count() == user_questions.filter(is_correct__isnull=False).count():
             for d in data:
                 d['show_report'] = True
+        return Response(data)
+
+
+class DiagnosticCheckAnswerView(PrivateSONRendererMixin, APIView):
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        serializer = CheckAnswerSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer_data = serializer.validated_data
+
+        options = serializer_data.get('options', [])
+        question_id = serializer_data.get('question_id')
+        open_answer = serializer_data.get('answer', None)
+
+        if not options and not open_answer:
+            return Response({'error': 'No options provided'}, status=400)
+
+        answers = DiagnosticExamAnswerOption.objects.filter(
+            id__in=options,
+            diagnostic_exam_question_id=question_id)
+        if not answers.exists():
+            raise AnswerDoesntExists
+        data = []
+        uqq = UserDiagnosticsResult.objects.filter(
+            Q(user=user) & Q(question_id=question_id)).first()
+        if uqq:
+            uqq.answers.clear()
+        is_correct = True
+        correct_answer_count = 0
+        for answer in answers:
+            is_correct = True
+            uqq.answers.add(answer.id)
+            if not answer.is_correct:
+                is_correct = False
+            uqq.updated_at = timezone.now()
+            uqq.save(update_fields=['updated_at'])
+            data.append({
+                'answer_id': answer.id,
+                'user_answer': open_answer,
+                'is_correct': is_correct,
+            })
+            if is_correct:
+                correct_answer_count += 1
+        if answers.count() == correct_answer_count:
+            uqq.is_correct = is_correct
+        else:
+            uqq.is_correct = False
+        uqq.save(update_fields=['is_correct', 'user_answer'])
         return Response(data)
 
 

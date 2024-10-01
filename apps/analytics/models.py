@@ -232,3 +232,56 @@ class ExamAnswerOption(AbstractOption):
         blank=True,
         related_name='exam_answer_options'
     )
+
+
+class DiagnosticExam(AbstractTitleModel):
+    subject = models.ForeignKey(
+        Subject,
+        verbose_name="Предмет",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='diagnostic_exams'
+    )
+    enabled = models.BooleanField(verbose_name="Разрешен", default=True)
+    questions_amount = models.IntegerField(default=1, verbose_name="Количество вопросов")
+    duration = models.IntegerField("Длительность(минут)", default=1)
+
+    class Meta:
+        verbose_name = _("Диагностический тест")
+        verbose_name_plural = _("Диагностический тесты")
+
+
+class DiagnosticExamQuestion(AbstractTitleModel):
+    image = LocalizedFileField(
+        upload_to="images/analytics/",
+        verbose_name="Картинка",
+        null=True,
+        blank=True,
+    )
+    score = models.IntegerField(default=1)
+    diagnostic_exam = models.ForeignKey(
+        DiagnosticExam,
+        verbose_name="Диагностический тест",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='diagnostic_exam_questions'
+    )
+
+    class Meta:
+        verbose_name = _("Вопрос (Диагностический тест)")
+        verbose_name_plural = _("Вопросы (Диагностический тест)")
+        ordering = ['score']
+
+
+class DiagnosticExamAnswerOption(AbstractOption):
+    diagnostic_exam_question = models.ForeignKey(
+        DiagnosticExamQuestion,
+        verbose_name="Вопрос",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='diagnostic_exam_answer_options'
+    )
+

@@ -6,9 +6,8 @@ import re
 from localized_fields.admin import LocalizedFieldsAdminMixin
 
 from apps.analytics.models import Question, Quiz, AnswerOption, EntranceExam, EntranceExamSubject, ExamQuestion, \
-    ExamAnswerOption, EntranceExamPerDay
+    ExamAnswerOption, EntranceExamPerDay, DiagnosticExam, DiagnosticExamQuestion, DiagnosticExamAnswerOption
 from apps.analytics.utils import regex_options
-
 
 
 class QuizInline(admin.StackedInline):
@@ -62,6 +61,7 @@ class ExamAnswerOptionInline(admin.StackedInline):
 @admin.register(Quiz)
 class QuizAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     inlines = [QuizQuestionInline]
+    search_fields = ['topic__name__ru', 'topic__name__kk']
     list_filter = ('subject', 'course', 'topic')
 
 
@@ -164,3 +164,91 @@ class ExamQuestionAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     search_fields = ('title__ru', 'title__kk')
     list_filter = ('assessment_subject',)
 
+
+class DiagnosticExamForm(forms.ModelForm):
+    file = forms.FileField(required=False, help_text="Upload an Excel file to create questions.")
+
+    class Meta:
+        model = DiagnosticExam
+        fields = '__all__'
+
+    def save(self, commit=True):
+        diagnostic_exam = super().save(commit=False)
+
+        if diagnostic_exam.pk is None:
+            diagnostic_exam.save()
+
+        file = self.cleaned_data.get('file')
+        if file:
+            self.validate_and_process_file(file, diagnostic_exam)
+
+        if commit:
+            diagnostic_exam.save()
+
+        return diagnostic_exam
+
+    def validate_and_process_file(self, file, diagnostic_exam):
+        try:
+            df = pd.read_excel(file)
+        except Exception as e:
+            raise ValidationError(f"Error reading Excel file: {e}")
+        self.process_file(df, diagnostic_exam)
+
+    def process_file(self, df, diagnostic_exam):
+
+        for _, row in df.iterrows():
+            kk_correct_answers = regex_options(str(row['kk_correct_answers']))
+            ru_correct_answers = regex_options(str(row['ru_correct_answers']))
+            ru_answers = regex_options(str(row['ru_answers'])) if row['ru_answers'] == row['ru_answers'] else None
+            kk_answers = regex_options(str(row['kk_answers'])) if row['kk_answers'] == row['kk_answers'] else None
+
+            question = DiagnosticExamQuestion.objects.create(
+                title={"kk": row['kk_task'], "ru": row['ru_task']},
+                diagnostic_exam=diagnostic_exam,
+                score=row.get('score', 1)
+            )
+            if not (kk_answers and ru_answers) and (kk_correct_answers and ru_correct_answers):
+                for kk_answer, ru_answer in zip(kk_correct_answers, ru_correct_answers):
+                    DiagnosticExamAnswerOption.objects.create(
+                        text={"kk": kk_answer, "ru": ru_answer},
+                        is_correct=True,
+                        diagnostic_exam_question=question
+                    )
+            else:
+                for kk_answer, ru_answer in zip(kk_answers, ru_answers):
+                    is_correct = kk_answer in kk_correct_answers or ru_answer in ru_correct_answers
+                    DiagnosticExamAnswerOption.objects.create(
+                        text={"kk": kk_answer, "ru": ru_answer},
+                        is_correct=is_correct,
+                        diagnostic_exam_question=question
+                    )
+
+
+class DiagnosticExamQuestionInline(admin.StackedInline):
+    model = DiagnosticExamQuestion
+    extra = 0
+
+
+class DiagnosticExamAnswerOptionInline(admin.StackedInline):
+    model = DiagnosticExamAnswerOption
+    extra = 0
+
+
+@admin.register(DiagnosticExam)
+class DiagnosticExamAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
+    list_display = ('title', 'subject', 'enabled', 'questions_amount', 'duration')
+    search_fields = ('title', 'subject__name')
+    list_filter = ('enabled', 'subject')
+    form = DiagnosticExamForm
+    inlines = [DiagnosticExamQuestionInline]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('subject')
+
+
+@admin.register(DiagnosticExamQuestion)
+class DiagnosticExamQuestionAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
+    list_display = ('title', 'score')
+    search_fields = ('title',)
+    list_filter = ('score',)
+    inlines = [DiagnosticExamAnswerOptionInline]

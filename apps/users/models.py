@@ -11,7 +11,7 @@ from .managers import UserManager
 
 from .. import Grades, Roles
 from ..analytics.models import Question, AnswerOption, Quiz, EntranceExam, ExamQuestion, ExamAnswerOption, \
-    EntranceExamPerDay
+    EntranceExamPerDay, DiagnosticExam, DiagnosticExamQuestion, DiagnosticExamAnswerOption
 from ..common.models import TimestampModel
 from ..content import Quarter
 from ..content.models import School, Course, Topic
@@ -345,6 +345,36 @@ class UserAssessmentResult(TimestampModel):
         AnswerOption,
         blank=True,
         related_name='user_assessment_results'
+    )
+    user_answer = models.CharField(max_length=100, null=True, blank=True)
+    is_correct = models.BooleanField(null=True, blank=True)
+
+
+class UserDiagnosticsResult(TimestampModel):
+    user = models.ForeignKey(
+        User,
+        verbose_name="Пользователь",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="user_diagnostic_results")
+    diagnostic_exam = models.ForeignKey(
+        DiagnosticExam,
+        verbose_name="Диагностический тест",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="user_diagnostic_results")
+    question = models.ForeignKey(
+        DiagnosticExamQuestion,
+        on_delete=models.CASCADE,
+        null=False,
+        related_name='user_diagnostic_results'
+    )
+    answers = models.ManyToManyField(
+        DiagnosticExamAnswerOption,
+        blank=True,
+        related_name='user_diagnostic_results'
     )
     user_answer = models.CharField(max_length=100, null=True, blank=True)
     is_correct = models.BooleanField(null=True, blank=True)

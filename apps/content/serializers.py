@@ -247,8 +247,9 @@ class MyTopicAddSerializer(serializers.ModelSerializer, UserPropertyMixin):
                 answered_count = self.user.user_quiz_questions.filter(
                     Q(answers__isnull=False) & Q(quiz_id=quiz.id)).count()
                 completed = (questions_amount == answered_count)
-        instance, created = MyTopic.objects.update_or_create(user=self.user, course_id=topic.chapter.course.id,
-                                                             defaults={'is_completed': completed,
-                                                                       'topic_id': topic.id})
+        instance, created = MyTopic.objects.update_or_create(user=self.user,
+                                                             course_id=topic.chapter.course.id,
+                                                             topic_id=topic.id,
+                                                             defaults={'is_completed': completed})
 
         return instance

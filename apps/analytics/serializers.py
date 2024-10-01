@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from apps.analytics.exceptions import InvalidAssessmentInput
 from apps.analytics.models import Quiz, Question, AnswerOption, EntranceExam, EntranceExamSubject, ExamQuestion, \
-    ExamAnswerOption, EntranceExamPerDay, QuestionType
+    ExamAnswerOption, EntranceExamPerDay, QuestionType, DiagnosticExam, DiagnosticExamQuestion
 from apps.common.mixins import UserPropertyMixin
 from apps.common.pagination import PaginationForQuestions
 from apps.common.serializers import AbstractImageSerializer, AbstractTitleSerializer, AbstractNameSerializer
@@ -482,3 +482,50 @@ class AssessmentCreateSerializer(serializers.ModelSerializer, UserPropertyMixin)
         UserAssessmentResult.objects.bulk_create(user_assessment_results)
 
         return instance
+
+
+class DiagnosticExamAnswerSerializer(AnswersSerializer):
+    class Meta(AnswersSerializer.Meta):
+        fields = AnswersSerializer.Meta.fields
+
+    def get_selected(self, obj):
+        user = self.user
+        if user.is_authenticated:
+            question = obj.diagnostic_exam_question
+            user_diagnostic_question = question.user_diagnostic_results.filter(
+                Q(user=self.user))
+            if user_diagnostic_question.exists():
+                return user_diagnostic_question.filter(answers=obj.id).exists()
+        return False
+
+
+class DiagnosticExamQuestionSerializer(AbstractImageSerializer, AbstractTitleSerializer, UserPropertyMixin):
+    answers = serializers.SerializerMethodField()
+    is_selected = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DiagnosticExamQuestion
+        fields = [
+            'id', 'title', 'image',
+            'is_selected', 'answers']
+
+    def get_answers(self, obj):
+        return DiagnosticExamAnswerSerializer(obj.diagnostic_exam_answer_options, many=True, context=self.context).data
+
+    def get_is_selected(self, obj):
+        if not obj.user_diagnostic_results.filter(Q(user=self.user) & Q(question_id=obj.id)).exists():
+            return False
+        if obj.user_diagnostic_results.filter(Q(user=self.user) & Q(question_id=obj.id)).first().is_correct is not None:
+            return True
+        return False
+
+
+class DiagnosticExamSerializer(serializers.ModelSerializer):
+    questions = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DiagnosticExam
+        fields = ['id', 'questions', 'questions_amount']
+
+    def get_questions(self, obj):
+        return DiagnosticExamQuestionSerializer(obj.diagnostic_exam_questions, many=True, context=self.context).data

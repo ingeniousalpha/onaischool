@@ -2,13 +2,15 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter
 
 from apps.analytics.views import TopicQuizzesView, CheckAnswerView, EntranceExamView, EntranceExamCheckAnswerView, \
-    FinishEntranceExamView, QuizView, FinishQuiz, AssessmentView, AssessmentCheckAnswerView, FinishAssessmentView
+    FinishEntranceExamView, QuizView, FinishQuiz, AssessmentView, AssessmentCheckAnswerView, FinishAssessmentView, \
+    DiagnosticExamView, DiagnosticCheckAnswerView
 
 urlpatterns = [
     path('exam-check-answer', EntranceExamCheckAnswerView.as_view()),
     path('finish-exam', FinishEntranceExamView.as_view()),
 
     path('check-answer', CheckAnswerView.as_view()),
+    path('diagnostic-check-answer', DiagnosticCheckAnswerView.as_view()),
     path('assessment-check-answer/<uuid:uuid>', AssessmentCheckAnswerView.as_view()),
     path('finish-assessment/<uuid:uuid>', FinishAssessmentView.as_view({'post': 'finish_assessment'}), name='finish-assessment'),
 
@@ -33,6 +35,7 @@ router = DefaultRouter()
 router.register('quiz', TopicQuizzesView, basename='topic-quizzes-view')
 router.register('assessment', AssessmentView, basename='assessment-view')
 router.register('entrance-exams', EntranceExamView, basename='entrance-exam-view')
+router.register('diagnostic-exams', DiagnosticExamView, basename='diagnostic-exam-view')
 
 
 urlpatterns += router.urls
