@@ -20,7 +20,7 @@ class MainPageSerializer(serializers.Serializer, UserPropertyMixin):
         is_active = False
         exam_id = None
         for d in DiagnosticExam.objects.filter(enabled=True).all():
-            if not user.user_diagnostic_results.filter(diagnostic_exam_id=d.id).exists():
+            if not user.user_diagnostic_reports.filter(diagnostic_exam_id=d.id).exists():
                 exam_id = d.id
                 is_active = True
 

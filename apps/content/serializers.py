@@ -20,16 +20,20 @@ class SchoolSerializer(AbstractNameSerializer):
 class TopicSerializer(AbstractNameSerializer, AbstractImageSerializer, UserPropertyMixin):
     video_link = serializers.SerializerMethodField()
     is_locked = serializers.SerializerMethodField()
+    is_favorite = serializers.SerializerMethodField()
 
     class Meta:
         model = Topic
-        fields = ['id', 'name', 'video_link', 'image', 'is_locked']
+        fields = ['id', 'name', 'video_link', 'image', 'is_locked', 'is_favorite']
 
     def get_is_locked(self, obj):
         return not self.user.enabled_topics.filter(id=obj.id).exists()
 
     def get_video_link(self, obj):
         return obj.video_link.translate()
+
+    def get_is_favorite(self, obj):
+        return self.user.my_topics.filter(topic_id=obj.id).exists()
 
 
 class TopicRetrieveSerializer(TopicSerializer, AbstractDescriptionSerializer):

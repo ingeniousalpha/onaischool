@@ -8,6 +8,7 @@ from localized_fields.admin import LocalizedFieldsAdminMixin
 from apps.analytics.models import Question, Quiz, AnswerOption, EntranceExam, EntranceExamSubject, ExamQuestion, \
     ExamAnswerOption, EntranceExamPerDay, DiagnosticExam, DiagnosticExamQuestion, DiagnosticExamAnswerOption
 from apps.analytics.utils import regex_options
+from apps.content.models import Topic
 
 
 class QuizInline(admin.StackedInline):
@@ -201,11 +202,17 @@ class DiagnosticExamForm(forms.ModelForm):
             ru_correct_answers = regex_options(str(row['ru_correct_answers']))
             ru_answers = regex_options(str(row['ru_answers'])) if row['ru_answers'] == row['ru_answers'] else None
             kk_answers = regex_options(str(row['kk_answers'])) if row['kk_answers'] == row['kk_answers'] else None
-
+            topic_id = row.get('topic_id', None)
+            if topic_id:
+                topic = Topic.objects.get(pk=topic_id)
+                if not topic:
+                    topic_id = None
             question = DiagnosticExamQuestion.objects.create(
                 title={"kk": row['kk_task'], "ru": row['ru_task']},
                 diagnostic_exam=diagnostic_exam,
-                score=row.get('score', 1)
+                score=row.get('score', 1),
+                topic_id=topic_id,
+                grade=str(row.get('grade', 5))
             )
             if not (kk_answers and ru_answers) and (kk_correct_answers and ru_correct_answers):
                 for kk_answer, ru_answer in zip(kk_correct_answers, ru_correct_answers):
@@ -236,14 +243,14 @@ class DiagnosticExamAnswerOptionInline(admin.StackedInline):
 
 @admin.register(DiagnosticExam)
 class DiagnosticExamAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
-    list_display = ('title', 'subject', 'enabled', 'questions_amount', 'duration')
-    search_fields = ('title', 'subject__name')
-    list_filter = ('enabled', 'subject')
+    list_display = ('title', 'enabled', 'questions_amount', 'duration')
+    search_fields = ('title',)
+    list_filter = ('enabled',)
     form = DiagnosticExamForm
     inlines = [DiagnosticExamQuestionInline]
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('subject')
+        return super().get_queryset(request)
 
 
 @admin.register(DiagnosticExamQuestion)

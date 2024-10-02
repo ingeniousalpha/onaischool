@@ -16,9 +16,9 @@ from apps.analytics.serializers import QuizSerializer, QuizQuestionsSerializer, 
     AssessmentCreateSerializer, AssessmentQuestionSerializer, DiagnosticExamSerializer, DiagnosticExamQuestionSerializer
 from apps.common.mixins import PrivateSONRendererMixin
 from apps.content.models import Subject
-from apps.content.serializers import SubjectSerializer
+from apps.content.serializers import SubjectSerializer, TopicSerializer
 from apps.users.models import UserQuizQuestion, UserExamQuestion, UserQuizReport, UserAssessmentResult, UserAssessment, \
-    UserDiagnosticsResult
+    UserDiagnosticsResult, UserDiagnosticExamReport, MyTopic
 
 
 class EntranceExamView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
@@ -35,7 +35,7 @@ class EntranceExamView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
         return EntranceExamSerializer
 
 
-class DiagnosticExamView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
+class DiagnosticExamQuestionView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
     queryset = DiagnosticExam.objects.all()
     serializer_class = DiagnosticExamSerializer
     pagination_class = None
@@ -50,26 +50,103 @@ class DiagnosticExamView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         diagnostic_exam = self.get_object()
-        if diagnostic_exam:
-            user = self.request.user
-            user_diagnostic_questions = user.user_diagnostic_results.filter(diagnostic_exam_id=diagnostic_exam.id).order_by('id')
-            if user_diagnostic_questions.count() == diagnostic_exam.questions_amount:
-                questions = [uqq.question for uqq in user_diagnostic_questions]
-            else:
-                questions = diagnostic_exam.diagnostic_exam_questions.all()[:diagnostic_exam.questions_amount]
-                for question in questions:
-                    instance, created = UserDiagnosticsResult.objects.get_or_create(
-                        diagnostic_exam=diagnostic_exam,
-                        user=user,
-                        question=question,
-                    )
-            serializer = self.get_serializer(questions,
-                                             many=True,
-                                             context={"request": request})
+        if not diagnostic_exam:
+            raise ExamNotFound
 
-            return Response({'id': diagnostic_exam.id,
-                             'questions': serializer.data})
-        return Response([])
+        user = self.request.user
+        user_diagnostic_report = user.user_diagnostic_reports.filter(
+            diagnostic_exam=diagnostic_exam, is_finished=False
+        ).prefetch_related('questions').prefetch_related('user_diagnostic_results')
+
+        if user_diagnostic_report.exists():
+            user_diagnostic_report = user_diagnostic_report.first()
+        else:
+            user_diagnostic_report = UserDiagnosticExamReport.objects.create(user=user, diagnostic_exam=diagnostic_exam)
+
+        questions = user_diagnostic_report.questions.all()
+
+        user_diagnostic_results = user.user_diagnostic_results.filter(user_diagnostic_report=user_diagnostic_report)
+        if questions.count() != user_diagnostic_results.count():
+            missing_questions = user_diagnostic_report.questions.exclude(
+                id__in=user_diagnostic_results.values('question_id'))
+            for question in missing_questions:
+                UserDiagnosticsResult.objects.get_or_create(
+                    user_diagnostic_report=user_diagnostic_report,
+                    user=user,
+                    question=question,
+                )
+
+        if not questions.exists():
+            diagnostic_questions = diagnostic_exam.diagnostic_exam_questions.all()[:diagnostic_exam.questions_amount]
+            user_diagnostic_report.questions.add(*diagnostic_questions)
+            questions = diagnostic_questions
+
+        serializer = self.get_serializer(questions, many=True, context={"request": request})
+        data = {
+            'id': diagnostic_exam.id,
+            'uuid': user_diagnostic_report.uuid,
+            'questions': serializer.data
+        }
+        return Response(data)
+
+
+class DiagnosticExamView(PrivateSONRendererMixin, viewsets.GenericViewSet):
+    queryset = UserDiagnosticExamReport.objects.all()
+    lookup_field = 'uuid'
+
+    def finish_diagnostic_exam(self, request, *args, **kwargs):
+        user_diagnostic_exam = self.get_object()
+        user = request.user
+
+        if user_diagnostic_exam.user != user:
+            raise YouCannotFinishQuiz
+
+        user_exam_answer = user_diagnostic_exam.user_diagnostic_results.filter(user=user)
+
+        questions_amount = user_diagnostic_exam.diagnostic_exam.questions_amount
+        correct_questions = user_exam_answer.filter(is_correct=True).count()
+        repeat_topics = set()
+        for incorrect_question in user_exam_answer.filter(Q(is_correct=False) | Q(is_correct__isnull=True)).all():
+            repeat_topics.add(incorrect_question.question.topic)
+
+        incorrect_questions = questions_amount - correct_questions
+        data = {
+            'correct_questions': correct_questions,
+            'incorrect_questions': incorrect_questions,
+            'repeat_topics': TopicSerializer(repeat_topics, many=True, context=self.get_serializer_context()).data
+        }
+        user_diagnostic_exam.is_finished = True
+        user_diagnostic_exam.save(update_fields=['is_finished'])
+
+        return Response(data)
+
+    def repeat_topics(self, request, *args, **kwargs):
+        user_diagnostic_exam = self.get_object()
+        user = request.user
+
+        if user_diagnostic_exam.user != user:
+            raise YouCannotFinishQuiz
+
+        user_exam_answer = user_diagnostic_exam.user_diagnostic_results.filter(user=user)
+        repeat_topics = set()
+        for incorrect_question in user_exam_answer.filter(Q(is_correct=False) | Q(is_correct__isnull=True)).all():
+            repeat_topics.add(incorrect_question.question.topic)
+
+        for topic in repeat_topics:
+            quizzes = topic.quizzes.all()
+            completed = False
+            if quizzes:
+                quiz = quizzes.first()
+                if quiz:
+                    questions_amount = quiz.questions_amount
+                    answered_count = user.user_quiz_questions.filter(
+                        Q(answers__isnull=False) & Q(quiz_id=quiz.id)).count()
+                    completed = (questions_amount == answered_count)
+            MyTopic.objects.update_or_create(user=user,
+                                             course_id=topic.chapter.course.id,
+                                             topic_id=topic.id,
+                                             defaults={'is_completed': completed})
+        return Response({}, status=status.HTTP_201_CREATED)
 
 
 class TopicQuizzesView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
@@ -244,6 +321,7 @@ class DiagnosticCheckAnswerView(PrivateSONRendererMixin, APIView):
                 'answer_id': answer.id,
                 'user_answer': open_answer,
                 'is_correct': is_correct,
+                'show_report': False
             })
             if is_correct:
                 correct_answer_count += 1
@@ -252,6 +330,12 @@ class DiagnosticCheckAnswerView(PrivateSONRendererMixin, APIView):
         else:
             uqq.is_correct = False
         uqq.save(update_fields=['is_correct', 'user_answer'])
+        user_questions = UserDiagnosticsResult.objects.filter(user=user,
+                                                              user_diagnostic_report=uqq.user_diagnostic_report,
+                                                              user_diagnostic_report__is_finished=False)
+        if user_questions.count() == user_questions.filter(is_correct__isnull=False).count():
+            for d in data:
+                d['show_report'] = True
         return Response(data)
 
 

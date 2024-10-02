@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from localized_fields.fields import LocalizedTextField, LocalizedFileField
 
+from apps import Grades
 from apps.common.models import AbstractTitleModel
 from apps.content import Quarter
 from apps.content.models import Topic, Subject, Course, Direction, Chapter
@@ -235,14 +236,7 @@ class ExamAnswerOption(AbstractOption):
 
 
 class DiagnosticExam(AbstractTitleModel):
-    subject = models.ForeignKey(
-        Subject,
-        verbose_name="Предмет",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='diagnostic_exams'
-    )
+
     enabled = models.BooleanField(verbose_name="Разрешен", default=True)
     questions_amount = models.IntegerField(default=1, verbose_name="Количество вопросов")
     duration = models.IntegerField("Длительность(минут)", default=1)
@@ -253,6 +247,20 @@ class DiagnosticExam(AbstractTitleModel):
 
 
 class DiagnosticExamQuestion(AbstractTitleModel):
+    topic = models.ForeignKey(
+        Topic,
+        verbose_name="Тема",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='diagnostic_exams'
+    )
+    grade = models.CharField(
+        max_length=3,
+        choices=Grades.choices,
+        default=Grades.FIRST,
+        verbose_name="Класс"
+    )
     image = LocalizedFileField(
         upload_to="images/analytics/",
         verbose_name="Картинка",

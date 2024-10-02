@@ -350,6 +350,32 @@ class UserAssessmentResult(TimestampModel):
     is_correct = models.BooleanField(null=True, blank=True)
 
 
+class UserDiagnosticExamReport(models.Model):
+    uuid = models.UUIDField(default=uuid_lib.uuid4, editable=False, unique=True)
+    user = models.ForeignKey(
+        User,
+        verbose_name="Пользователь",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="user_diagnostic_reports"
+    )
+    diagnostic_exam = models.ForeignKey(
+        DiagnosticExam,
+        verbose_name="Диагностический тест",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="user_diagnostic_reports"
+    )
+    questions = models.ManyToManyField(
+        DiagnosticExamQuestion,
+        blank=True,
+        related_name='user_diagnostic_reports'
+    )
+    is_finished = models.BooleanField(default=False)
+
+
 class UserDiagnosticsResult(TimestampModel):
     user = models.ForeignKey(
         User,
@@ -358,9 +384,9 @@ class UserDiagnosticsResult(TimestampModel):
         null=True,
         blank=True,
         related_name="user_diagnostic_results")
-    diagnostic_exam = models.ForeignKey(
-        DiagnosticExam,
-        verbose_name="Диагностический тест",
+    user_diagnostic_report = models.ForeignKey(
+        UserDiagnosticExamReport,
+        verbose_name="Репорт",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
