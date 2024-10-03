@@ -502,12 +502,16 @@ class DiagnosticExamAnswerSerializer(AnswersSerializer):
 class DiagnosticExamQuestionSerializer(AbstractImageSerializer, AbstractTitleSerializer, UserPropertyMixin):
     answers = serializers.SerializerMethodField()
     is_selected = serializers.SerializerMethodField()
+    type = serializers.SerializerMethodField()
 
     class Meta:
         model = DiagnosticExamQuestion
         fields = [
             'id', 'title', 'image',
-            'is_selected', 'answers']
+            'type', 'is_selected', 'answers']
+
+    def get_type(self, obj):
+        return 'one_choice'
 
     def get_answers(self, obj):
         return DiagnosticExamAnswerSerializer(obj.diagnostic_exam_answer_options, many=True, context=self.context).data
