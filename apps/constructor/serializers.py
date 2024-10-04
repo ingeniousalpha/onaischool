@@ -23,7 +23,11 @@ class MainPageSerializer(serializers.Serializer, UserPropertyMixin):
             if not user.user_diagnostic_reports.filter(diagnostic_exam_id=d.id).exists():
                 exam_id = d.id
                 is_active = True
-
+                break
+            elif user.user_diagnostic_reports.filter(diagnostic_exam_id=d.id, is_finished=False).exists():
+                exam_id = d.id
+                is_active = True
+                break
         return {'is_active': is_active,
                 'diagnostic_exam_id': exam_id}
 

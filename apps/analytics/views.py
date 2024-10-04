@@ -63,7 +63,7 @@ class DiagnosticExamQuestionView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
         else:
             user_diagnostic_report = UserDiagnosticExamReport.objects.create(user=user, diagnostic_exam=diagnostic_exam)
 
-        questions = user_diagnostic_report.questions.all()
+        questions = user_diagnostic_report.questions.all().order_by('id')
 
         user_diagnostic_results = user.user_diagnostic_results.filter(user_diagnostic_report=user_diagnostic_report)
         if questions.count() != user_diagnostic_results.count():
@@ -299,8 +299,11 @@ class DiagnosticCheckAnswerView(PrivateSONRendererMixin, APIView):
             return Response({'error': 'No options provided'}, status=400)
 
         answers = DiagnosticExamAnswerOption.objects.filter(
-            id__in=options,
-            diagnostic_exam_question_id=question_id)
+            Q(id__in=options,
+              diagnostic_exam_question_id=question_id)
+            |
+            Q(diagnostic_exam_question_id=question_id,
+              diagnostic_exam_question__type=QuestionType.open_answer))
         if not answers.exists():
             raise AnswerDoesntExists
         data = []
@@ -312,11 +315,21 @@ class DiagnosticCheckAnswerView(PrivateSONRendererMixin, APIView):
         correct_answer_count = 0
         for answer in answers:
             is_correct = True
-            uqq.answers.add(answer.id)
-            if not answer.is_correct:
-                is_correct = False
-            uqq.updated_at = timezone.now()
-            uqq.save(update_fields=['updated_at'])
+            if answer.diagnostic_exam_question.type == QuestionType.open_answer:
+                uqq.user_answer = open_answer
+                if not open_answer:
+                    is_correct = False
+                elif answer.text.ru.lower() == open_answer.lower():
+                    uqq.answers.add(answer.id)
+                    uqq.is_correct = True
+                else:
+                    is_correct = False
+            else:
+                uqq.answers.add(answer.id)
+                if not answer.is_correct:
+                    is_correct = False
+                uqq.updated_at = timezone.now()
+                uqq.save(update_fields=['updated_at'])
             data.append({
                 'answer_id': answer.id,
                 'user_answer': open_answer,

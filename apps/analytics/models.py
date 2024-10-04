@@ -267,6 +267,12 @@ class DiagnosticExamQuestion(AbstractTitleModel):
         null=True,
         blank=True,
     )
+    type = models.CharField(
+        max_length=255,
+        choices=QuestionType.choices,
+        default=QuestionType.one_choice,
+        verbose_name='Тип вопроса'
+    )
     score = models.IntegerField(default=1)
     diagnostic_exam = models.ForeignKey(
         DiagnosticExam,

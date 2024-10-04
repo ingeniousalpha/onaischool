@@ -6,7 +6,8 @@ import re
 from localized_fields.admin import LocalizedFieldsAdminMixin
 
 from apps.analytics.models import Question, Quiz, AnswerOption, EntranceExam, EntranceExamSubject, ExamQuestion, \
-    ExamAnswerOption, EntranceExamPerDay, DiagnosticExam, DiagnosticExamQuestion, DiagnosticExamAnswerOption
+    ExamAnswerOption, EntranceExamPerDay, DiagnosticExam, DiagnosticExamQuestion, DiagnosticExamAnswerOption, \
+    QuestionType
 from apps.analytics.utils import regex_options
 from apps.content.models import Topic
 
@@ -203,6 +204,8 @@ class DiagnosticExamForm(forms.ModelForm):
             ru_answers = regex_options(str(row['ru_answers'])) if row['ru_answers'] == row['ru_answers'] else None
             kk_answers = regex_options(str(row['kk_answers'])) if row['kk_answers'] == row['kk_answers'] else None
             topic_id = row.get('topic_id', None)
+            open_answer = row.get('open_answer', None)
+
             if topic_id:
                 topic = Topic.objects.get(pk=topic_id)
                 if not topic:
@@ -210,10 +213,20 @@ class DiagnosticExamForm(forms.ModelForm):
             question = DiagnosticExamQuestion.objects.create(
                 title={"kk": row['kk_task'], "ru": row['ru_task']},
                 diagnostic_exam=diagnostic_exam,
+                type=str(row['type']),
                 score=row.get('score', 1),
                 topic_id=topic_id,
                 grade=str(row.get('grade', 5))
             )
+            if open_answer is not None:
+                question.type = QuestionType.open_answer
+                DiagnosticExamAnswerOption.objects.create(
+                    text={"kk": open_answer, "ru": open_answer},
+                    is_correct=True,
+                    question=question
+                )
+                question.save(update_fields=['type'])
+
             if not (kk_answers and ru_answers) and (kk_correct_answers and ru_correct_answers):
                 for kk_answer, ru_answer in zip(kk_correct_answers, ru_correct_answers):
                     DiagnosticExamAnswerOption.objects.create(

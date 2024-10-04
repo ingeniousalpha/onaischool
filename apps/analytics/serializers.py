@@ -13,7 +13,8 @@ from apps.common.pagination import PaginationForQuestions
 from apps.common.serializers import AbstractImageSerializer, AbstractTitleSerializer, AbstractNameSerializer
 from apps.content.models import Subject, Chapter, Course
 from apps.content.serializers import SubjectSerializer
-from apps.users.models import UserExamQuestion, UserExamResult, UserQuizQuestion, UserAssessment, UserAssessmentResult
+from apps.users.models import UserExamQuestion, UserExamResult, UserQuizQuestion, UserAssessment, UserAssessmentResult, \
+    UserDiagnosticsResult
 
 
 class ExamSubjectSerializer(AbstractTitleSerializer):
@@ -502,16 +503,31 @@ class DiagnosticExamAnswerSerializer(AnswersSerializer):
 class DiagnosticExamQuestionSerializer(AbstractImageSerializer, AbstractTitleSerializer, UserPropertyMixin):
     answers = serializers.SerializerMethodField()
     is_selected = serializers.SerializerMethodField()
-    type = serializers.SerializerMethodField()
+    open_answer = serializers.SerializerMethodField()
+    show_report = serializers.SerializerMethodField()
 
     class Meta:
         model = DiagnosticExamQuestion
         fields = [
-            'id', 'title', 'image',
+            'id', 'title', 'image', 'open_answer', 'show_report',
             'type', 'is_selected', 'answers']
 
-    def get_type(self, obj):
-        return 'one_choice'
+    def get_show_report(self, obj):
+        diagnostic_report = self.user.user_diagnostic_results.filter(user_diagnostic_report__is_finished=False).first().user_diagnostic_report
+        results = obj.user_diagnostic_results.filter(user_diagnostic_report_id=diagnostic_report.id).all()
+        if diagnostic_report.questions.count() == results.filter(is_correct__isnull=False).count():
+            return True
+        return False
+
+    def get_open_answer(self, obj):
+        user = self.user
+        if obj.type == QuestionType.open_answer and obj.user_diagnostic_results.filter(user=user).exists():
+            uqq = obj.user_diagnostic_results.filter(user=user).first()
+            return {
+                "is_correct": uqq.is_correct,
+                "user_answer": uqq.user_answer,
+            }
+        return {}
 
     def get_answers(self, obj):
         return DiagnosticExamAnswerSerializer(obj.diagnostic_exam_answer_options, many=True, context=self.context).data
