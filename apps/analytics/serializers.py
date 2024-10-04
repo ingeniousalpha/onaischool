@@ -513,10 +513,12 @@ class DiagnosticExamQuestionSerializer(AbstractImageSerializer, AbstractTitleSer
             'type', 'is_selected', 'answers']
 
     def get_show_report(self, obj):
-        diagnostic_report = self.user.user_diagnostic_results.filter(user_diagnostic_report__is_finished=False).first().user_diagnostic_report
-        results = obj.user_diagnostic_results.filter(user_diagnostic_report_id=diagnostic_report.id).all()
-        if diagnostic_report.questions.count() == results.filter(is_correct__isnull=False).count():
-            return True
+        user_diagnostic_results = self.user.user_diagnostic_results.filter(user_diagnostic_report__is_finished=False)
+        if user_diagnostic_results.exists():
+            diagnostic_report = user_diagnostic_results.first().user_diagnostic_report
+            results = obj.user_diagnostic_results.filter(user_diagnostic_report_id=diagnostic_report.id).all()
+            if diagnostic_report.questions.count() == results.filter(is_correct__isnull=False).count():
+                return True
         return False
 
     def get_open_answer(self, obj):
