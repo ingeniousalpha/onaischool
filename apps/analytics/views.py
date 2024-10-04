@@ -309,6 +309,8 @@ class DiagnosticCheckAnswerView(PrivateSONRendererMixin, APIView):
         data = []
         uqq = UserDiagnosticsResult.objects.filter(
             Q(user=user) & Q(question_id=question_id)).first()
+        if not uqq:
+            raise ExamNotFound
         if uqq:
             uqq.answers.clear()
         is_correct = True
