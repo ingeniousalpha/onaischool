@@ -505,12 +505,32 @@ class DiagnosticExamQuestionSerializer(AbstractImageSerializer, AbstractTitleSer
     is_selected = serializers.SerializerMethodField()
     open_answer = serializers.SerializerMethodField()
     show_report = serializers.SerializerMethodField()
+    explain_video = serializers.SerializerMethodField()
+    explanation_answer = serializers.SerializerMethodField()
+    explanation_answer_image = serializers.SerializerMethodField()
+    explanation_correct_answer = serializers.SerializerMethodField()
+
 
     class Meta:
         model = DiagnosticExamQuestion
         fields = [
             'id', 'title', 'image', 'open_answer', 'show_report',
-            'type', 'is_selected', 'answers']
+            'type', 'is_selected', 'answers', 'explain_video', 'explanation_answer', 'explanation_answer_image', 'explanation_correct_answer']
+
+    def get_explanation_correct_answer(self, obj):
+        return None
+
+    def get_explanation_answer(self, obj):
+        return None
+
+    def get_explanation_answer_image(self):
+        return None
+
+    def get_explain_video(self, obj):
+        return None
+
+    def get_explanation(self, obj):
+        return None
 
     def get_show_report(self, obj):
         user_diagnostic_results = self.user.user_diagnostic_results.filter(user_diagnostic_report__is_finished=False)
