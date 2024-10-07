@@ -260,9 +260,15 @@ class MyTokenObtainSerializer(serializers.Serializer):
 
 
 class AccountSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'full_name']
+        fields = ['id', 'full_name', 'image']
+
+    def get_image(self, obj):
+        request = self.context.get('request')
+        return request.build_absolute_uri(obj.avatar.image)
 
 
 class AuthByChildrenSerializer(serializers.Serializer):
