@@ -269,7 +269,7 @@ class AccountSerializer(serializers.ModelSerializer):
     def get_image(self, obj):
         request = self.context.get('request')
         if obj.avatar:
-            return request.build_absolute_uri(obj.avatar.image)
+            return obj.avatar.image
 
 
 class AuthByChildrenSerializer(serializers.Serializer):
