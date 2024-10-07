@@ -523,7 +523,7 @@ class DiagnosticExamQuestionSerializer(AbstractImageSerializer, AbstractTitleSer
     def get_explanation_answer(self, obj):
         return None
 
-    def get_explanation_answer_image(self):
+    def get_explanation_answer_image(self, obj):
         return None
 
     def get_explain_video(self, obj):
