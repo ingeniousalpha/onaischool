@@ -74,7 +74,8 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         if not Avatar.objects.filter(id=data.get('avatar_id')).exists():
             raise AvatarNotFound
 
-        data['avatar'] = AvatarSerializer(Avatar.objects.filter(id=data.get('avatar_id')).first(), many=False).data
+        data['avatar'] = AvatarSerializer(Avatar.objects.filter(id=data.get('avatar_id')).first(), many=False,
+                                          context=self.context).data
 
         return data
 
