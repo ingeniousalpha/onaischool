@@ -77,7 +77,7 @@ class DiagnosticExamQuestionView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
                 )
 
         if not questions.exists():
-            diagnostic_questions = diagnostic_exam.diagnostic_exam_questions.all()[:diagnostic_exam.questions_amount]
+            diagnostic_questions = diagnostic_exam.diagnostic_exam_questions.all().order_by('id')[:diagnostic_exam.questions_amount]
             user_diagnostic_report.questions.add(*diagnostic_questions)
             questions = diagnostic_questions
 
