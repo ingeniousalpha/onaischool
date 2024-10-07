@@ -268,8 +268,9 @@ class AccountSerializer(serializers.ModelSerializer):
 
     def get_image(self, obj):
         request = self.context.get('request')
-        if obj.avatar:
-            return obj.avatar.image
+        if obj.avatar and obj.avatar.image:
+            # Use the relative image URL and append it to the media path
+            return request.build_absolute_uri(f"/media/{obj.avatar.image}")
 
 
 class AuthByChildrenSerializer(serializers.Serializer):
