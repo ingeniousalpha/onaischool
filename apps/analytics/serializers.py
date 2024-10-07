@@ -509,13 +509,23 @@ class DiagnosticExamQuestionSerializer(AbstractImageSerializer, AbstractTitleSer
     explanation_answer = serializers.SerializerMethodField()
     explanation_answer_image = serializers.SerializerMethodField()
     explanation_correct_answer = serializers.SerializerMethodField()
+    final_result = serializers.SerializerMethodField()
+    is_answer_viewed = serializers.SerializerMethodField()
 
 
     class Meta:
         model = DiagnosticExamQuestion
         fields = [
             'id', 'title', 'image', 'open_answer', 'show_report',
+            'final_result', 'is_answer_viewed',
             'type', 'is_selected', 'answers', 'explain_video', 'explanation_answer', 'explanation_answer_image', 'explanation_correct_answer']
+
+
+    def get_final_result(self, obj):
+        return False
+
+    def get_is_answer_viewed(self, obj):
+        return False
 
     def get_explanation_correct_answer(self, obj):
         return None
