@@ -65,6 +65,11 @@ class DiagnosticExamQuestionView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
 
         questions = user_diagnostic_report.questions.all().order_by('id')
 
+        if not questions.exists():
+            diagnostic_questions = diagnostic_exam.diagnostic_exam_questions.all().order_by('id')[:diagnostic_exam.questions_amount]
+            user_diagnostic_report.questions.add(*diagnostic_questions)
+            questions = diagnostic_questions
+
         user_diagnostic_results = user.user_diagnostic_results.filter(user_diagnostic_report=user_diagnostic_report)
         if questions.count() != user_diagnostic_results.count():
             missing_questions = user_diagnostic_report.questions.exclude(
@@ -75,11 +80,6 @@ class DiagnosticExamQuestionView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
                     user=user,
                     question=question,
                 )
-
-        if not questions.exists():
-            diagnostic_questions = diagnostic_exam.diagnostic_exam_questions.all().order_by('id')[:diagnostic_exam.questions_amount]
-            user_diagnostic_report.questions.add(*diagnostic_questions)
-            questions = diagnostic_questions
 
         serializer = self.get_serializer(questions, many=True, context={"request": request})
         data = {
