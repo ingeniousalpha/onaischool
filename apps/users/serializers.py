@@ -55,10 +55,10 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "full_name",
             "grade",
             "school_id",
-            "avatar_id",
+            'avatar_id',
             "current_password",
             "new_password",
-            "re_password"
+            "re_password",
         ]
 
     def validate(self, data):
@@ -73,6 +73,8 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
         if not Avatar.objects.filter(id=data.get('avatar_id')).exists():
             raise AvatarNotFound
+
+        data['avatar'] = AvatarSerializer(Avatar.objects.filter(id=data.get('avatar_id')).first(), many=False).data
 
         return data
 
