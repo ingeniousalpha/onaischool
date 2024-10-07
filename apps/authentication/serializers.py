@@ -15,6 +15,7 @@ from .models import OTP
 from .services import generate_access_and_refresh_tokens_for_user, validate_password
 from .. import Roles
 from ..content.models import School
+from ..users.models import Avatar
 
 User = get_user_model()
 
@@ -149,6 +150,10 @@ class AddChildrenSerializer(serializers.ModelSerializer):
             child = User.objects.create(full_name=validated_data['full_name'], parent_id=user.id,
                                         grade=validated_data['grade'],
                                         school_id=validated_data['school_id'])
+            avatar = Avatar.objects.first()
+            if avatar:
+                child.avatar = avatar
+                child.save(update_fields=['avatar'])
 
             return child
         return user
