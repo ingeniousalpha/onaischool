@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 
+from apps import Roles
 from apps.authentication.exceptions import SchoolNotFound
 from apps.content.models import School
 from apps.content.serializers import SchoolSerializer
@@ -89,10 +90,14 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         instance.avatar_id = validated_data.get('avatar_id', instance.avatar_id)
 
         if current_password and new_password:
-            if not instance.check_password(current_password):
+            if instance.role == Roles.STUDENT:
+                user = instance.parent
+            else:
+                user = instance
+            if not user.check_password(current_password):
                 raise NewPasswordInvalid
 
-            instance.password = make_password(new_password)
-
+            user.password = make_password(new_password)
+            user.save()
         instance.save()
         return instance

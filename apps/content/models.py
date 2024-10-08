@@ -95,7 +95,7 @@ class Topic(PriorityModel, AbstractRequiredNameModel, AbstractDescriptionModel):
         blank=True,
     )
     chapter = models.ForeignKey(Chapter, verbose_name="Раздел",
-                                on_delete=models.SET_NULL, null=True, blank=True, related_name="topics")
+                                on_delete=models.CASCADE, related_name="topics")
 
     class Meta:
         verbose_name = _("Тема")
