@@ -484,7 +484,7 @@
 
 
                 if (regionId || schoolId || studentId) {
-                    fetch(`/get-tasks-data/?task_period=${task_period}&region_id=${regionId}&school_id=${schoolId}&student_id=${studentId}`)
+                    fetch(`/get-tasks-data/?task_period=${task_period}&region_id=${regionId}&school_id=${schoolId}&student_id=${studentId}&_=${new Date().getTime()}`)
                         .then(response => response.json())
                         .then(data => {
                             updateChartData(data);
