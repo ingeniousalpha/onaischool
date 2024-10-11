@@ -499,7 +499,7 @@
             document.getElementById('region_filter').addEventListener('change', function () {
                 var regionId = this.value;
                 if (regionId) {
-                    fetch(`/get-schools/?region_id=${regionId}`)
+                    fetch(`/get-schools/?region_id=${regionId}&_=${new Date().getTime()}`)
                         .then(response => {
                             if (!response.ok) {
                                 console.error('Error fetching schools:', response.statusText);
