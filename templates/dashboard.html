@@ -484,7 +484,7 @@
 
 
                 if (regionId || schoolId || studentId) {
-                    fetch(`/get-tasks-data/?task_period=${task_period}&region_id=${regionId}&school_id=${schoolId}&student_id=${studentId}&_=${new Date().getTime()}`)
+                    fetch(`/dashboard/get-tasks-data/?task_period=${task_period}&region_id=${regionId}&school_id=${schoolId}&student_id=${studentId}&_=${new Date().getTime()}`)
                         .then(response => response.json())
                         .then(data => {
                             updateChartData(data);
@@ -499,16 +499,9 @@
             document.getElementById('region_filter').addEventListener('change', function () {
                 var regionId = this.value;
                 if (regionId) {
-                    fetch(`/get-schools/?region_id=${regionId}&_=${new Date().getTime()}`)
-                        .then(response => {
-                            if (!response.ok) {
-                                console.error('Error fetching schools:', response.statusText);
-                                return response.text();
-                            }
-                            return response.json();})
+                    fetch(`/dashboard/get-schools/?region_id=${regionId}`)
                         .then(response => response.json())
                         .then(data => {
-                            console.log(data, '1111');
                             var schoolSelect = document.getElementById('school_filter');
                             schoolSelect.innerHTML = '<option value="">Select School</option>';
                             data.forEach(function (school) {
@@ -526,7 +519,7 @@
             document.getElementById('school_filter').addEventListener('change', function () {
                 var schoolId = this.value;
                 if (schoolId) {
-                    fetch(`/get-students/?school_id=${schoolId}`)
+                    fetch(`/dashboard/get-students/?school_id=${schoolId}`)
                         .then(response => response.json())
                         .then(data => {
                             console.log(data, '1111')
@@ -555,7 +548,7 @@
                     var regionId = document.getElementById('region_filter').value;
                     var schoolId = document.getElementById('school_filter').value;
 
-                    fetch(`/get-tasks-data/?region_id=${regionId}&school_id=${schoolId}&student_id=${studentId}`)
+                    fetch(`/dashboard/get-tasks-data/?region_id=${regionId}&school_id=${schoolId}&student_id=${studentId}`)
                         .then(response => response.json())
                         .then(data => {
                             document.getElementById('tasks_solved').textContent = data.tasks_solved;
