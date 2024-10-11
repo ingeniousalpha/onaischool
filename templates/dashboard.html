@@ -502,6 +502,7 @@
                     fetch(`/get-schools/?region_id=${regionId}`)
                         .then(response => response.json())
                         .then(data => {
+                            console.log(data, '1111');
                             var schoolSelect = document.getElementById('school_filter');
                             schoolSelect.innerHTML = '<option value="">Select School</option>';
                             data.forEach(function (school) {
