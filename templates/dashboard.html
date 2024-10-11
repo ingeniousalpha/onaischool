@@ -522,6 +522,7 @@
                     fetch(`/get-students/?school_id=${schoolId}`)
                         .then(response => response.json())
                         .then(data => {
+                            console.log(data, '1111')
                             var studentSelect = document.getElementById('student_filter');
                             studentSelect.innerHTML = '<option value="">Select Student</option>';
                             data.forEach(function (student) {
