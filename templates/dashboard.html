@@ -37,6 +37,23 @@
             color: black;
         }
         .title {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px; /* Adjust the spacing between elements */
+        }
+
+        .title select {
+            padding: 8px;
+            font-size: 14px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            flex: 1; /* Makes the select elements grow to fill the available space */
+            min-width: 200px; /* Ensures a minimum width for each select box */
+        }
+
+        .title {
             margin-bottom: 24px;
         }
         .title h1 {
@@ -58,6 +75,21 @@
         .content-block {
             padding-top: 20px;
             margin-bottom: 50px;
+        }
+
+        @media (max-width: 768px) {
+            .title {
+                flex-direction: column; /* Stack elements vertically on smaller screens */
+                gap: 15px;
+            }
+
+            .title select {
+                width: 100%; /* Make selects full width on small screens */
+            }
+        }
+
+        .chart-container {
+            margin-top: 20px;
         }
     </style>
 
@@ -82,7 +114,6 @@
 
                 <!-- Begin Page Content -->
                 <div class="container-fluid">
-
                     <!-- Content Row -->
                     <div class="content-block" id="block1">
                         <div class="title">
@@ -184,6 +215,107 @@
                             </div>
                         </div>
                     </div>
+
+                <div class="content-block" id="block4">
+                    <div class="title">
+                        <h1>Users Performance</h1>
+                        <select name="time_filter" id="time_filter" class="period_select">
+                            <option value="today" {% if task_period == "today" %}selected{% endif %}>Сегодня
+                            </option>
+                            <option value="last_week" {% if task_period == "last_week" %}selected{% endif %}>
+                                Последнюю неделю
+                            </option>
+                            <option value="last_month"
+                                    {% if task_period == "last_month" %}selected{% endif %}>Последний месяц
+                            </option>
+                            <option value="last_year" {% if task_period == "last_year" %}selected{% endif %}>
+                                Последний год
+                            </option>
+                        </select>
+
+                        <select name="region_filter" id="region_filter" class="filter_select">
+                            <option value="all">All Regions</option>
+                            {% for city in cities %}
+                                <option value="{{ city.id }}">{{ city.name.ru }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <select name="school_filter" id="school_filter" class="filter_select">
+                            <option value="">Select School</option>
+                            <!-- Schools will be populated dynamically based on the region -->
+                        </select>
+
+                        <select name="student_filter" id="student_filter" class="filter_select">
+                            <option value="">Select Student</option>
+                            <!-- Students will be populated dynamically based on the school -->
+                        </select>
+                    </div>
+
+
+                    <div class="row">
+                        <!-- Line Chart -->
+                        <div class="col-xl-12 col-lg-12">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">Performance Over Time</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-area">
+                                        <canvas id="userPerformanceChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Tasks Solved -->
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-primary shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                Tasks Solved</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="tasks_solved">0</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tasks Correct -->
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-success shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                                Tasks Correct</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="tasks_correct">0</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Percent Correct -->
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-warning shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                                Percent Correct</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="percent_correct">0%</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
 
                 </div>
                 <!-- /.container-fluid -->
@@ -335,6 +467,163 @@
             }
           }
         });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            function updateChartData(data) {
+                    // Replace the chart's data with new data from the server
+                    performanceChart.data.labels = data.users_dates_list;  // Update the x-axis labels
+                    performanceChart.data.datasets[0].data = data.user_tasks_list;  // Update the task counts
+
+                    // Re-render the chart with new data
+                    performanceChart.update();
+                }
+            function updateTaskData() {
+                var task_period = document.getElementById('time_filter').value;
+                var studentId = document.getElementById('student_filter').value;
+                var regionId = document.getElementById('region_filter').value;
+                var schoolId = document.getElementById('school_filter').value;
+
+
+                if (regionId || schoolId || studentId) {
+                    fetch(`/get-tasks-data/?task_period=${task_period}&region_id=${regionId}&school_id=${schoolId}&student_id=${studentId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            updateChartData(data);
+                            document.getElementById('tasks_solved').textContent = data.tasks_solved;
+                            document.getElementById('tasks_correct').textContent = data.tasks_correct;
+                            document.getElementById('percent_correct').textContent = data.percent_correct.toFixed(2) + '%';
+                        });
+                }
+            }
+
+            // When the region changes, update the schools dropdown
+            document.getElementById('region_filter').addEventListener('change', function () {
+                var regionId = this.value;
+                if (regionId) {
+                    fetch(`/get-schools/?region_id=${regionId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            var schoolSelect = document.getElementById('school_filter');
+                            schoolSelect.innerHTML = '<option value="">Select School</option>';
+                            data.forEach(function (school) {
+                                var option = document.createElement('option');
+                                option.value = school.id;
+                                option.textContent = school.name.ru;
+                                schoolSelect.appendChild(option);
+                            });
+                        });
+                }
+                updateTaskData()
+            });
+
+            // When the school changes, update the students dropdown
+            document.getElementById('school_filter').addEventListener('change', function () {
+                var schoolId = this.value;
+                if (schoolId) {
+                    fetch(`/get-students/?school_id=${schoolId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            var studentSelect = document.getElementById('student_filter');
+                            studentSelect.innerHTML = '<option value="">Select Student</option>';
+                            data.forEach(function (student) {
+                                var option = document.createElement('option');
+                                option.value = student.id;
+                                if(student.full_name) {
+                                    option.textContent = student.full_name;
+                                }
+                                else {
+                                    option.textContent = student.mobile_phone;
+                                }
+                                studentSelect.appendChild(option);
+                            });
+                        });
+                }
+                updateTaskData();
+            });
+
+            // When the student changes, update the task data
+            document.getElementById('student_filter').addEventListener('change', function () {
+                var studentId = this.value;
+                if (studentId) {
+                    var regionId = document.getElementById('region_filter').value;
+                    var schoolId = document.getElementById('school_filter').value;
+
+                    fetch(`/get-tasks-data/?region_id=${regionId}&school_id=${schoolId}&student_id=${studentId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById('tasks_solved').textContent = data.tasks_solved;
+                            document.getElementById('tasks_correct').textContent = data.tasks_correct;
+                            document.getElementById('percent_correct').textContent = data.percent_correct.toFixed(2) + '%';
+                        });
+                }
+                updateTaskData();
+            });
+
+             document.getElementById('time_filter').addEventListener('change', function () {
+                updateTaskData();
+            });
+
+        });
+
+        var performance_chart_ctx = document.getElementById("userPerformanceChart");
+        var performanceChart = new Chart(performance_chart_ctx, {
+            type: 'line',
+            data: {
+                labels: [], // Example labels, replace with real data
+                datasets: [{
+                    label: "Tasks Solved Over Time",
+                    lineTension: 0.3,
+                    backgroundColor: "rgba(78, 115, 223, 0.05)",
+                    borderColor: "rgba(78, 115, 223, 1)",
+                    pointRadius: 3,
+                    pointBackgroundColor: "rgba(78, 115, 223, 1)",
+                    pointBorderColor: "rgba(78, 115, 223, 1)",
+                    pointHoverRadius: 3,
+                    pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+                    pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+                    pointHitRadius: 10,
+                    pointBorderWidth: 2,
+                    data: [], // Example data, replace with real values
+                }],
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: {
+                    xAxes: [{
+                        time: {
+                            unit: 'month'
+                        },
+                        gridLines: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            maxTicksLimit: 6
+                        }
+                    }],
+                    yAxes: [{
+                        ticks: {
+                            maxTicksLimit: 5,
+                            padding: 10,
+                            callback: function (value) {
+                                return number_format(value);
+                            }
+                        },
+                        gridLines: {
+                            color: "rgb(234, 236, 244)",
+                            zeroLineColor: "rgb(234, 236, 244)",
+                            drawBorder: false,
+                            borderDash: [2],
+                            zeroLineBorderDash: [2]
+                        }
+                    }],
+                },
+                legend: {
+                    display: false
+                },
+            }
+        });
+
 
 
     </script>
