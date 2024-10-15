@@ -64,9 +64,8 @@ class ExamSubjectDetailSerializer(ExamSubjectSerializer):
 
         user_exam_questions = user.user_exam_questions.filter(
             exam_question_id__in=obj.exam_questions.values_list('id', flat=True))
-
-        if user_exam_questions.count() == obj.questions_amount:
-            questions = [uqq.question for uqq in user_exam_questions]
+        if user_exam_questions.count() > 0 and user_exam_questions.count() == obj.questions_amount:
+            questions = [uqq.exam_question.id for uqq in user_exam_questions]
         else:
             questions_to_create = obj.exam_questions.exclude(
                 id__in=user_exam_questions.values_list('exam_question_id', flat=True))[
@@ -144,10 +143,21 @@ class EntranceExamSerializer(serializers.ModelSerializer):
 
 class ExtranceExamDetailSerializer(EntranceExamSerializer):
     next_subjects = serializers.SerializerMethodField()
+    start_datetime = serializers.SerializerMethodField()
 
     class Meta(EntranceExamSerializer.Meta):
         model = EntranceExam
-        fields = EntranceExamSerializer.Meta.fields + ['next_subjects']
+        fields = EntranceExamSerializer.Meta.fields + ['next_subjects', 'start_datetime']
+
+    def get_start_datetime(self, obj):
+        request = self.context.get('request')
+        user = request.user
+        query_params = request.query_params
+        day = query_params.get('day')
+        exam_per_day = EntranceExamPerDay.objects.filter(id=day).first()
+        if obj.user_exam_results.filter(user=user, exam_per_day=exam_per_day).exists():
+            return obj.user_exam_results.filter(user=user, exam_per_day=exam_per_day).first().start_datetime
+        return timezone.now()
 
     def get_exam_subjects(self, obj):
         request = self.context.get('request')
@@ -243,8 +253,10 @@ class QuizQuestionsSerializer(AbstractTitleSerializer, AbstractImageSerializer, 
         return AnswersSerializer(obj.answer_options, many=True, context=self.context).data
 
     def get_is_selected(self, obj):
-        if obj.user_quiz_questions.filter(Q(user=self.user) & Q(question_id=obj.id)).first().is_correct is not None:
-            return True
+        user_quiz_question = obj.user_quiz_questions.filter(Q(user=self.user) & Q(question_id=obj.id)).first()
+        if user_quiz_question is not None:
+            if not user_quiz_question.report.finished and user_quiz_question.is_correct:
+                return True
         return False
 
     def get_is_answer_viewed(self, obj):
