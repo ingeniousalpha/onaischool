@@ -219,12 +219,14 @@ class DiagnosticExamForm(forms.ModelForm):
                 grade=str(row.get('grade', 5))
             )
             if open_answer is not None:
+                answers = open_answer.split('\n')
                 question.type = QuestionType.open_answer
-                DiagnosticExamAnswerOption.objects.create(
-                    text={"kk": open_answer, "ru": open_answer},
-                    is_correct=True,
-                    question=question
-                )
+                for answer in answers:
+                    DiagnosticExamAnswerOption.objects.create(
+                        text={"kk": answer, "ru": answer},
+                        is_correct=True,
+                        question=question
+                    )
                 question.save(update_fields=['type'])
 
             if not (kk_answers and ru_answers) and (kk_correct_answers and ru_correct_answers):

@@ -177,7 +177,12 @@ class TopicQuizzesView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
         quiz = Quiz.objects.filter(filter_conditions).first()
         if quiz:
             user_quiz_report = user.user_quiz_reports.filter(Q(quiz_id=quiz.id) & Q(finished=False)).first()
-            if user_quiz_report is None:
+            is_repeat = self.request.query_params.get('is_repeat', 'false').lower() == 'true'
+            if is_repeat:
+                user_quiz_report.finished = True
+                user_quiz_report.save()
+
+            if user_quiz_report is None or user_quiz_report.finished:
                 user_quiz_report = UserQuizReport.objects.create(
                     user_id=user.id,
                     quiz_id=quiz.id

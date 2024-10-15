@@ -149,12 +149,14 @@ class TopicAdminForm(forms.ModelForm):
                 type=QuestionType.multiple_choice if len(kk_correct_answers) > 1 or len(ru_correct_answers) > 1 else QuestionType.one_choice
             )
             if open_answer is not None:
+                answers = open_answer.split('\n')
                 question.type = QuestionType.open_answer
-                AnswerOption.objects.create(
-                    text={"kk": open_answer, "ru": open_answer},
-                    is_correct=True,
-                    question=question
-                )
+                for answer in answers:
+                    AnswerOption.objects.create(
+                        text={"kk": answer, "ru": answer},
+                        is_correct=True,
+                        question=question
+                    )
                 question.save(update_fields=['type'])
             else:
                 if not (kk_answers and ru_answers) and (kk_correct_answers and ru_correct_answers):
