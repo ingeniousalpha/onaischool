@@ -182,12 +182,12 @@ class TopicQuizzesView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
                 user_quiz_report.finished = True
                 user_quiz_report.save()
 
-            if user_quiz_report is None or user_quiz_report.finished:
+            if user_quiz_report is None or is_repeat:
                 user_quiz_report = UserQuizReport.objects.create(
                     user_id=user.id,
                     quiz_id=quiz.id
                 )
-            user_quiz_questions = user.user_quiz_questions.filter(Q(quiz_id=quiz.id) & Q(report__finished=False))
+            user_quiz_questions = user.user_quiz_questions.filter(Q(quiz_id=quiz.id) & Q(report__finished=False) & Q( report=user_quiz_report))
             if user_quiz_questions.count() == quiz.questions_amount:
                 questions = [uqq.question for uqq in user_quiz_questions]
             else:
