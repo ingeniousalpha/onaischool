@@ -262,7 +262,8 @@ class QuizQuestionsSerializer(AbstractTitleSerializer, AbstractImageSerializer, 
     def get_is_answer_viewed(self, obj):
         uqq = obj.user_quiz_questions.filter(Q(user=self.user) & Q(question_id=obj.id)).first()
         if uqq:
-            return uqq.answer_viewed
+            if not uqq.report.finished and uqq.answer_viewed:
+                return True
         return False
 
     def get_show_report(self, obj):
