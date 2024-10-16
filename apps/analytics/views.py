@@ -187,7 +187,7 @@ class TopicQuizzesView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
                     user_id=user.id,
                     quiz_id=quiz.id
                 )
-            user_quiz_questions = user.user_quiz_questions.filter(Q(quiz_id=quiz.id) & Q(report__finished=False) & Q( report=user_quiz_report))
+            user_quiz_questions = user.user_quiz_questions.filter(Q(quiz_id=quiz.id) & Q(report__finished=False) & Q(report=user_quiz_report))
             if user_quiz_questions.count() == quiz.questions_amount:
                 questions = [uqq.question for uqq in user_quiz_questions]
             else:
@@ -452,7 +452,10 @@ class QuizView(PrivateSONRendererMixin,
     def show_hints(self, request, pk: int):
         instance = self.get_object()
         user = request.user
-        user_quiz_answer = instance.user_quiz_questions.filter(Q(user=user) & Q(question_id=instance.id)).first()
+        user_quiz_answer = instance.user_quiz_questions.filter(
+            Q(user=user) &
+            Q(question_id=instance.id)
+        ).order_by('-id').first()
         user_quiz_answer.used_hints = True
         user_quiz_answer.save(update_fields=['used_hints'])
         serializer = self.get_serializer(instance, context={"request": request})
@@ -461,7 +464,11 @@ class QuizView(PrivateSONRendererMixin,
     def show_answer(self, request, pk: int):
         instance = self.get_object()
         user = request.user
-        user_quiz_answer = instance.user_quiz_questions.filter(Q(user=user) & Q(question_id=instance.id)).first()
+        user_quiz_answer = instance.user_quiz_questions.filter(
+            Q(user=user) &
+            Q(question_id=instance.id)
+        ).order_by('-id').first()
+
         if not user_quiz_answer.is_correct:
             user_quiz_answer.is_correct = False
         user_quiz_answer.answer_viewed = True
