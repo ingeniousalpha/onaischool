@@ -166,7 +166,8 @@ class ExtranceExamDetailSerializer(EntranceExamSerializer):
         day = query_params.get('day')
         exam_per_day = EntranceExamPerDay.objects.filter(id=day).first()
         user.current_exam_per_day = exam_per_day
-        if not obj.user_exam_results.filter(user=user, exam_per_day=exam_per_day).exists():
+        uqr = obj.user_exam_results.filter(Q(user=user) & Q(exam_per_day=exam_per_day) & Q(end_datetime__isnull=False))
+        if not uqr.exists():
             UserExamResult.objects.create(user=user,
                                           exam_per_day=exam_per_day,
                                           entrance_exam=obj,
