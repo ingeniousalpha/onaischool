@@ -244,7 +244,7 @@ class CheckAnswerView(PrivateSONRendererMixin, APIView):
             raise AnswerDoesntExists
         data = []
         uqq = UserQuizQuestion.objects.filter(
-            Q(user=user) & Q(question_id=question_id) & Q(report__finished=False)).first()
+            Q(user=user) & Q(question_id=question_id) & Q(report__finished=False)).order_by('-id').first()
         if uqq:
             uqq.answers.clear()
         is_correct = True

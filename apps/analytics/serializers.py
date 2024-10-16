@@ -254,15 +254,14 @@ class QuizQuestionsSerializer(AbstractTitleSerializer, AbstractImageSerializer, 
         return AnswersSerializer(obj.answer_options, many=True, context=self.context).data
 
     def get_is_selected(self, obj):
-        user_quiz_question = obj.user_quiz_questions.filter(Q(user=self.user) & Q(question_id=obj.id)).order_by(
-            '-id').first()
+        user_quiz_question = obj.user_quiz_questions.filter(user=self.user).order_by('-id').first()
         if user_quiz_question is not None:
-            if not user_quiz_question.report.finished and user_quiz_question.is_correct:
+            if not user_quiz_question.report.finished and user_quiz_question.is_correct is not None:
                 return True
         return False
 
     def get_is_answer_viewed(self, obj):
-        uqq = obj.user_quiz_questions.filter(Q(user=self.user) & Q(question_id=obj.id)).order_by('-id').first()
+        uqq = obj.user_quiz_questions.filter(user=self.user).order_by('-id').first()
         if uqq:
             if not uqq.report.finished and uqq.answer_viewed:
                 return True
@@ -278,7 +277,7 @@ class QuizQuestionsSerializer(AbstractTitleSerializer, AbstractImageSerializer, 
     def get_open_answer(self, obj):
         user = self.user
         if obj.type == QuestionType.open_answer and obj.user_quiz_questions.filter(user=user).exists():
-            uqq = obj.user_quiz_questions.filter(user=user).first()
+            uqq = obj.user_quiz_questions.filter(user=user).order_by('-id').first()
             return {
                 "is_correct": uqq.is_correct,
                 "user_answer": uqq.user_answer,
@@ -382,7 +381,7 @@ class QuestionSerializerWithAnswer(QuizQuestionsSerializer):
         correct_answer_text = ''
         for correct_answer in correct_answers:
             correct_answer_text += correct_answer.text.translate() + ' '
-        return correct_answer_text.strip()
+            return correct_answer_text.strip()
 
 
 class QuizSerializer(serializers.ModelSerializer):
