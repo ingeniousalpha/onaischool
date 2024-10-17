@@ -8,4 +8,5 @@ urlpatterns = [
     path("cities/", include("apps.location.urls")),
     path("analytics/", include("apps.analytics.urls")),
     path("constructor/", include("apps.constructor.urls")),
+    path("landing", include("apps.landing.urls"))
 ]
