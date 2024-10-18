@@ -13,7 +13,7 @@ class CourseFeature(TimestampModel, AbstractTitleModel, PriorityModel):
 
 
 class Course(TimestampModel, AbstractTitleModel, AbstractDescriptionModel, PriorityModel):
-    features = models.ManyToManyField(CourseFeature, null=True, blank=True)
+    features = models.ManyToManyField(CourseFeature)
 
     class Meta:
         verbose_name = 'Курс'
