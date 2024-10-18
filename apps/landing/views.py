@@ -12,6 +12,7 @@ from apps.landing.serializers import UserRequestSerializer, LandingSerializer
 class UserRequestView(PublicJSONRendererMixin, CreateAPIView):
     queryset = UserRequest.objects.all()
     serializer_class = UserRequestSerializer
+    permission_classes = [LandingTokenPermission]
 
 
 class LandingView(PublicJSONRendererMixin, APIView):
