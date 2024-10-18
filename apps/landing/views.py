@@ -1,9 +1,12 @@
 from django.shortcuts import render
-from rest_framework.generics import CreateAPIView
+from rest_framework.generics import CreateAPIView, ListAPIView
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from apps.common.mixins import PrivateSONRendererMixin, PublicJSONRendererMixin
-from apps.landing.models import UserRequest, UserQuestion
-from apps.landing.serializers import UserRequestSerializer, UserQuestionSerializer
+from apps.landing.models import UserRequest
+from apps.landing.permissions import LandingTokenPermission
+from apps.landing.serializers import UserRequestSerializer, LandingSerializer
 
 
 class UserRequestView(PublicJSONRendererMixin, CreateAPIView):
@@ -11,7 +14,10 @@ class UserRequestView(PublicJSONRendererMixin, CreateAPIView):
     serializer_class = UserRequestSerializer
 
 
-class UserQuestionView(PublicJSONRendererMixin, CreateAPIView):
-    queryset = UserQuestion.objects.all()
-    serializer_class = UserQuestionSerializer
+class LandingView(PublicJSONRendererMixin, APIView):
+    queryset = None
+    serializer_class = LandingSerializer
+    permission_classes = [LandingTokenPermission]
 
+    def get(self, request):
+        return Response(data=LandingSerializer({}, context={"request": request}, many=False).data)

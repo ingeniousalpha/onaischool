@@ -30,6 +30,10 @@ class SafeJWTAuthentication(BaseAuthentication):
 
         if not authorization_header:
             return None
+
+        if not authorization_header.startswith('JWT '):
+            return None
+
         try:
             # header = 'Token xxxxxxxxxxxxxxxxxxxxxxxx'
             access_token = authorization_header.split(' ')[1]

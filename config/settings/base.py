@@ -28,7 +28,7 @@ PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'm$*!s$%=a1e685t@h#34%!-!(q5(q=lj0bdlgh&ewv)*u3#nz6'
 ENCRYPTION_KEY = 'S3&ewm85t=a1e6@h$*!s$d%#v)*4%!-!(q5(q=lj0bdlghu3#nz6'
-
+LANDING_SECRET_KEY = 'm$*!s$%=a1e685t@h#34%!-!(q5(q=lj0bdlgh&ewv)*u3#nz6'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 

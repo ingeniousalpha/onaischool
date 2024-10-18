@@ -5,7 +5,7 @@ from .views import *
 
 
 urlpatterns = [
+    path('', LandingView.as_view()),
     path('/request', UserRequestView.as_view()),
-    path('/question', UserQuestionView.as_view()),
 ]
 
