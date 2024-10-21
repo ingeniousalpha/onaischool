@@ -5,8 +5,8 @@ from apps.landing.models import *
 
 
 class UserRequestSerializer(serializers.ModelSerializer):
-    comment = serializers.CharField(required=False)
-    text = serializers.CharField(required=False)
+    comment = serializers.CharField(required=False, allow_blank=True, write_only=True)
+    text = serializers.CharField(required=False, allow_blank=True, write_only=True)
 
     class Meta:
         model = UserRequest
