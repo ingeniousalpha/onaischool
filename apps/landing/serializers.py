@@ -45,7 +45,7 @@ class TeacherSerializer(AbstractDescriptionSerializer, AbstractImageSerializer):
 
     class Meta:
         model = Teacher
-        fields = ['id', 'first_name', 'last_name', 'subject_name', 'image_url']
+        fields = ['id', 'first_name', 'description', 'last_name', 'subject_name', 'image_url']
 
     def get_subject_name(self, obj):
         return obj.subject_name.translate()

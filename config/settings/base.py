@@ -43,6 +43,8 @@ DEV_MODE = bool(os.getenv('DEV_MODE', 1))
 
 TG_AUTH_BOT_USERNAME = os.getenv('TG_AUTH_BOT_USERNAME')
 TG_AUTH_BOT_HOST = os.getenv('TG_AUTH_BOT_HOST', 'http://gp-tgauth-bot:3113')
+TELEGRAM_BOT_TOKEN = "7783386485:AAGkgoGDPAhu7n7_HXYwmxFBv_n7jvme_Cc"
+
 
 # RABBITMQ_HOST_SERVER = 'localhost'
 # RABBITMQ_USER = 'user'
@@ -274,7 +276,7 @@ MEDIA_ROOT = os.path.join(PROJECT_DIR, "..", "media")
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SITE_DOMAIN = "http://127.0.0.1:8008"
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+# TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 # smtp
 EMAIL_USE_TLS = False

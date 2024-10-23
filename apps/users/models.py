@@ -28,6 +28,7 @@ class User(PermissionsMixin, AbstractBaseUser):
     mobile_phone = PhoneNumberField("Моб. телефон", blank=True, null=True)
     secret_key = models.UUIDField("Секретный ключ", default=uuid_lib.uuid4, unique=True)
     language = models.CharField(max_length=20, choices=Languages.choices, default=Languages.KAZAKH, verbose_name="Язык")
+    chat_id = models.CharField(max_length=50, null=True, blank=True)
     parent = models.ForeignKey(
         'self',
         on_delete=models.CASCADE,

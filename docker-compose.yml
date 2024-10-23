@@ -48,6 +48,17 @@ services:
     networks:
       - onai-net
 
+  telegram_bot:
+    build: .
+    command: python manage.py start_telegram_bot  # Команда для запуска бота
+    volumes:
+      - .:/app
+    depends_on:
+      - onai-db
+      - onai-server
+    networks:
+      - onai-net
+
   onai-beat:
     container_name: onai-beat
     restart: always
