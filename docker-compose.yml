@@ -88,7 +88,7 @@ services:
       - ./.env.dev
     networks:
       - onai-net
-    command: "celery -A config.celery_app worker --loglevel=INFO"
+    command: "celery -A config.celery_app worker --loglevel=INFO -Q onai-tasks"
 
   onai-db:
     container_name: onai-db
