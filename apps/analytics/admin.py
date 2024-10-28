@@ -8,7 +8,7 @@ from localized_fields.admin import LocalizedFieldsAdminMixin
 from apps.analytics.models import Question, Quiz, AnswerOption, EntranceExam, EntranceExamSubject, ExamQuestion, \
     ExamAnswerOption, EntranceExamPerDay, DiagnosticExam, DiagnosticExamQuestion, DiagnosticExamAnswerOption, \
     QuestionType
-from apps.analytics.utils import regex_options
+from apps.analytics.utils import regex_options, remove_latex_bracket
 from apps.content.models import Topic
 
 
@@ -138,7 +138,7 @@ class ExamSubjectForm(forms.ModelForm):
             if not (kk_answers and ru_answers) and (kk_correct_answers and ru_correct_answers):
                 for kk_answer, ru_answer in zip(kk_correct_answers, ru_correct_answers):
                     AnswerOption.objects.create(
-                        text={"kk": kk_answer, "ru": ru_answer},
+                        text={"kk": remove_latex_bracket(kk_answer), "ru": remove_latex_bracket(ru_answer)},
                         is_correct=True,
                         exam_question=question
                     )
@@ -146,7 +146,7 @@ class ExamSubjectForm(forms.ModelForm):
                 for kk_answer, ru_answer in zip(kk_answers, ru_answers):
                     is_correct = kk_answer in kk_correct_answers or ru_answer in ru_correct_answers
                     ExamAnswerOption.objects.create(
-                        text={"kk": kk_answer, "ru": ru_answer},
+                        text={"kk": remove_latex_bracket(kk_answer), "ru": remove_latex_bracket(ru_answer)},
                         is_correct=is_correct,
                         exam_question=question
                     )
@@ -222,8 +222,9 @@ class DiagnosticExamForm(forms.ModelForm):
                 answers = open_answer.split('\n')
                 question.type = QuestionType.open_answer
                 for answer in answers:
+                    wol_answer = remove_latex_bracket(answer)
                     DiagnosticExamAnswerOption.objects.create(
-                        text={"kk": answer, "ru": answer},
+                        text={"kk": wol_answer, "ru": wol_answer},
                         is_correct=True,
                         question=question
                     )
@@ -232,7 +233,7 @@ class DiagnosticExamForm(forms.ModelForm):
             if not (kk_answers and ru_answers) and (kk_correct_answers and ru_correct_answers):
                 for kk_answer, ru_answer in zip(kk_correct_answers, ru_correct_answers):
                     DiagnosticExamAnswerOption.objects.create(
-                        text={"kk": kk_answer, "ru": ru_answer},
+                        text={"kk": remove_latex_bracket(kk_answer), "ru": remove_latex_bracket(ru_answer)},
                         is_correct=True,
                         diagnostic_exam_question=question
                     )
@@ -240,7 +241,7 @@ class DiagnosticExamForm(forms.ModelForm):
                 for kk_answer, ru_answer in zip(kk_answers, ru_answers):
                     is_correct = kk_answer in kk_correct_answers or ru_answer in ru_correct_answers
                     DiagnosticExamAnswerOption.objects.create(
-                        text={"kk": kk_answer, "ru": ru_answer},
+                        text={"kk": remove_latex_bracket(kk_answer), "ru": remove_latex_bracket(ru_answer)},
                         is_correct=is_correct,
                         diagnostic_exam_question=question
                     )

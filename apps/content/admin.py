@@ -13,6 +13,7 @@ from apps.analytics.admin import QuizInline, ExamInline
 from apps.analytics.models import Quiz, Question, QuestionType, AnswerOption
 from apps.common.admin import ReadOnlyMixin
 from apps.content.models import *
+from apps.content.utils import remove_latex_bracket
 from apps.users.models import User
 
 
@@ -153,7 +154,7 @@ class TopicAdminForm(forms.ModelForm):
                 question.type = QuestionType.open_answer
                 for answer in answers:
                     AnswerOption.objects.create(
-                        text={"kk": answer, "ru": answer},
+                        text={"kk": remove_latex_bracket(answer), "ru": remove_latex_bracket(answer)},
                         is_correct=True,
                         question=question
                     )
@@ -162,7 +163,7 @@ class TopicAdminForm(forms.ModelForm):
                 if not (kk_answers and ru_answers) and (kk_correct_answers and ru_correct_answers):
                     for kk_answer, ru_answer in zip(kk_correct_answers, ru_correct_answers):
                         AnswerOption.objects.create(
-                            text={"kk": kk_answer, "ru": ru_answer},
+                            text={"kk": remove_latex_bracket(kk_answer), "ru": remove_latex_bracket(ru_answer)},
                             is_correct=True,
                             question=question
                         )
@@ -170,7 +171,7 @@ class TopicAdminForm(forms.ModelForm):
                     for kk_answer, ru_answer in zip(kk_answers, ru_answers):
                         is_correct = kk_answer in kk_correct_answers or ru_answer in ru_correct_answers
                         AnswerOption.objects.create(
-                            text={"kk": kk_answer, "ru": ru_answer},
+                            text={"kk": remove_latex_bracket(kk_answer), "ru": remove_latex_bracket(ru_answer)},
                             is_correct=is_correct,
                             question=question
                         )
