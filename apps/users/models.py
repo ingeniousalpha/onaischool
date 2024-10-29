@@ -241,6 +241,12 @@ class UserExamQuestion(TimestampModel):
         null=False,
         related_name='user_exam_questions'
     )
+    exam_result = models.ForeignKey(
+        "UserExamResult",
+        on_delete=models.CASCADE,
+        null=True,
+        related_name='user_exam_questions'
+    )
     user = models.ForeignKey(
         User,
         verbose_name="Пользователь",

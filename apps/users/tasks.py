@@ -20,10 +20,10 @@ def send_student_data():
     for user in users:
         for child in user.children.all():
             text_parts = [f'Имя/Фамилия: {child.full_name}\n']
-            topic_names = []
+            topic_names = set()
             for q in child.user_quiz_questions.all():
                 topic_name = q.quiz.topic.name.kk if q.quiz.topic.name.kk else q.quiz.topic.name.ru
-                topic_names.append(topic_name)
+                topic_names.add(topic_name)
             questions_count = child.user_quiz_questions.filter(
                 Q(is_correct__isnull=False) |
                 Q(answer_viewed=True) |

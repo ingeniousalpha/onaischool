@@ -382,7 +382,12 @@ class EntranceExamCheckAnswerView(PrivateSONRendererMixin, APIView):
             raise AnswerDoesntExists
         data = []
         is_correct = True
-        uqq = UserExamQuestion.objects.filter(user=user, exam_question=question_id).first()
+        uqq = UserExamQuestion.objects.filter(user=user,
+                                              exam_question=question_id,
+                                              exam_result__end_datetime__isnull=True).order_by('-id').first()
+        if uqq.exam_result:
+            uqq.exam_result.updated_at = timezone.now()
+            uqq.exam_result.save()
         if uqq:
             uqq.answers.clear()
         for answer in answers:
