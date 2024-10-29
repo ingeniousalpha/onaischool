@@ -431,10 +431,9 @@ class FinishEntranceExamView(PrivateSONRendererMixin, APIView):
         user_exam_result.save(update_fields=['end_datetime', 'correct_score'])
         duration = user_exam_result.end_datetime - user_exam_result.start_datetime
         duration_seconds = duration.total_seconds()
-        duration_minutes = duration_seconds / 60
         resp_data = {
             'score': correct_question_count,
-            'duration': round(duration_minutes, 2),
+            'duration': duration_seconds,
             'passing_score': passing_score,
         }
         return Response(resp_data)
@@ -647,11 +646,10 @@ class FinishAssessmentView(PrivateSONRendererMixin, viewsets.GenericViewSet):
         incorrect_questions = questions_amount - correct_questions
         duration = user_assessment.end_datetime - user_assessment.start_datetime
         duration_seconds = duration.total_seconds()
-        duration_minutes = duration_seconds / 60
         data = {
             'correct_questions': correct_questions,
             'incorrect_questions': incorrect_questions,
-            'duration': round(duration_minutes, 2),
+            'duration': duration_seconds,
         }
         # user_assessment.is_finished = True
         # user_assessment.save(update_fields=['is_finished'])

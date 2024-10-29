@@ -169,7 +169,7 @@ class EntranceExam(models.Model):
 
 class EntranceExamPerDay(AbstractTitleModel):
     passing_score = models.IntegerField(verbose_name="Проходной балл")
-    duration = models.IntegerField(verbose_name="Длительность", default=0)
+    duration = models.IntegerField(verbose_name="Длительность(в сек)", default=0)
     exam = models.ForeignKey(
         EntranceExam,
         verbose_name="Выступительный тест",

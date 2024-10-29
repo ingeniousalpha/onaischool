@@ -93,10 +93,14 @@ class ExamPerDayForMainPageSerializer(AbstractTitleSerializer):
     subjects = serializers.SerializerMethodField()
     direction_name = serializers.SerializerMethodField()
     entrance_exam_id = serializers.IntegerField(source="exam.id")
+    duration = serializers.SerializerMethodField()
 
     class Meta:
         model = EntranceExamPerDay
         fields = ['id', 'entrance_exam_id', 'title', 'duration', 'subjects', 'direction_name']
+
+    def get_duration(self, obj):
+        return obj.duration * 60
 
     def get_subjects(self, obj):
         return ExamSubjectSerializer(obj.exam_subjects, many=True).data
@@ -107,10 +111,14 @@ class ExamPerDayForMainPageSerializer(AbstractTitleSerializer):
 
 class ExamPerDaySerializer(AbstractTitleSerializer):
     subjects = serializers.SerializerMethodField()
+    duration = serializers.SerializerMethodField()
 
     class Meta:
         model = EntranceExamPerDay
         fields = ['id', 'title', 'duration', 'subjects']
+
+    def get_duration(self, obj):
+        return obj.duration*60
 
     def get_subjects(self, obj):
         return ExamSubjectSerializer(obj.exam_subjects, many=True, context=self.context).data
@@ -146,31 +154,24 @@ class EntranceExamSerializer(serializers.ModelSerializer):
 
 class ExtranceExamDetailSerializer(EntranceExamSerializer):
     next_subjects = serializers.SerializerMethodField()
-    start_datetime = serializers.SerializerMethodField()
-    last_datetime = serializers.SerializerMethodField()
+    passed_duration = serializers.SerializerMethodField()
 
     class Meta(EntranceExamSerializer.Meta):
         model = EntranceExam
-        fields = EntranceExamSerializer.Meta.fields + ['next_subjects', 'start_datetime', 'last_datetime']
+        fields = EntranceExamSerializer.Meta.fields + ['next_subjects', 'passed_duration']
 
-    def get_start_datetime(self, obj):
+    def get_passed_duration(self, obj):
         request = self.context.get('request')
         user = request.user
         query_params = request.query_params
         day = query_params.get('day')
         exam_per_day = EntranceExamPerDay.objects.filter(id=day).first()
         if obj.user_exam_results.filter(user=user, exam_per_day=exam_per_day).exists():
-            return obj.user_exam_results.filter(user=user, exam_per_day=exam_per_day).first().start_datetime
-        return timezone.now()
+            ueq = obj.user_exam_results.filter(user=user, exam_per_day=exam_per_day).first()
+            passed_duration = ueq.updated_at - ueq.start_datetime
+            return passed_duration.total_seconds()
 
-    def get_last_datetime(self, obj):
-        request = self.context.get('request')
-        user = request.user
-        query_params = request.query_params
-        day = query_params.get('day')
-        exam_per_day = EntranceExamPerDay.objects.filter(id=day).first()
-        if obj.user_exam_results.filter(user=user, exam_per_day=exam_per_day).exists():
-            return obj.user_exam_results.filter(user=user, exam_per_day=exam_per_day).first().updated_at
+
 
     def get_exam_subjects(self, obj):
         request = self.context.get('request')
