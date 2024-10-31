@@ -168,6 +168,8 @@ class ExtranceExamDetailSerializer(EntranceExamSerializer):
         exam_per_day = EntranceExamPerDay.objects.filter(id=day).first()
         if obj.user_exam_results.filter(user=user, exam_per_day=exam_per_day).exists():
             ueq = obj.user_exam_results.filter(user=user, exam_per_day=exam_per_day).first()
+            if ueq.updated_at < ueq.start_datetime:
+                return 0
             passed_duration = ueq.updated_at - ueq.start_datetime
             return passed_duration.total_seconds()
 
