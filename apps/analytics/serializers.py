@@ -187,8 +187,8 @@ class ExtranceExamDetailSerializer(EntranceExamSerializer):
                                           entrance_exam=obj,
                                           start_datetime=timezone.now())
         else:
-            uqr.updated_at = timezone.now()
-            uqr.save(update_fields=['updated_at'])
+            uqr.order_by('-id').first().updated_at = timezone.now()
+            uqr.order_by('-id').first().save(update_fields=['updated_at'])
         user.save(update_fields=['current_exam_per_day'])
         self.context['uqr'] = uqr.order_by('-id').first().id
         return ExamPerDayDetailSerializer(obj.exam_per_day.filter(id=day).all(), many=True, context=self.context).data
@@ -363,9 +363,15 @@ class AssessmentSerializer(serializers.ModelSerializer):
     def get_duration(self, obj):
         duration = 60
         if obj.assessment_type == 'SOR':
+            print(obj.subject.id)
+            print(obj.subject.sor_duration)
             duration = duration * obj.subject.sor_duration
+            print(duration)
         else:
+            print(obj.subject.id)
+            print(obj.subject.soch_duration)
             duration = duration * obj.subject.soch_duration
+            print(duration)
         return duration
 
     def get_passed_duration(self, obj):
