@@ -42,6 +42,8 @@ class Subject(PriorityModel, AbstractRequiredNameModel):
     enable_sor_soch = models.BooleanField(default=False, verbose_name="Сор/Соч разрешен")
     sor_question_count = models.IntegerField(default=0, verbose_name="СОР(Суммативное Оценивание за Раздел) кол-во")
     soch_question_count = models.IntegerField(default=0, verbose_name="СОЧ(Суммативное Оценивание за Четверть) кол-во")
+    sor_duration = models.IntegerField("СОР(Суммативное Оценивание за Раздел) длительность(минут)", default=1)
+    soch_duration = models.IntegerField("СОЧ(Суммативное Оценивание за Четверть) длительность(минут)", default=1)
 
     class Meta:
         verbose_name = _("Предмет")

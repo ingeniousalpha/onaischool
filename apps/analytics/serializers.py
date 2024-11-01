@@ -173,8 +173,6 @@ class ExtranceExamDetailSerializer(EntranceExamSerializer):
             passed_duration = ueq.updated_at - ueq.start_datetime
             return passed_duration.total_seconds()
 
-
-
     def get_exam_subjects(self, obj):
         request = self.context.get('request')
         user = request.user
@@ -351,6 +349,28 @@ class AssessmentQuestionSerializer(AbstractImageSerializer, AbstractTitleSeriali
                 "user_answer": uqq.user_answer,
             }
         return {}
+
+
+class AssessmentSerializer(serializers.ModelSerializer):
+    passed_duration = serializers.SerializerMethodField()
+    questions = AssessmentQuestionSerializer(source='questions', many=True)
+    duration = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserAssessment
+        fields = ['id', 'questions', 'passed_duration', 'duration']
+
+    def get_duration(self, obj):
+        if obj.assessment_type == 'SOR':
+            return obj.subject.sor_duration
+        else:
+            return obj.subject.soch_duration
+
+    def get_passed_duration(self, obj):
+        if obj.updated_at < obj.start_datetime:
+            return 0
+        passed_duration = obj.updated_at - obj.start_datetime
+        return passed_duration.total_seconds()
 
 
 class QuizQuestionDetailSerializer(QuizQuestionsSerializer):

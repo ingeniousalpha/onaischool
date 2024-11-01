@@ -13,7 +13,8 @@ from apps.analytics.models import Quiz, Question, AnswerOption, EntranceExam, Ex
 from apps.analytics.serializers import QuizSerializer, QuizQuestionsSerializer, QuizQuestionDetailSerializer, \
     CheckAnswerSerializer, EntranceExamSerializer, ExtranceExamDetailSerializer, EntranceCheckAnswerSerializer, \
     FinishExamSerializer, QuestionSerializerWithHints, QuestionSerializerWithAnswer, AssessmentSubjectsSerializer, \
-    AssessmentCreateSerializer, AssessmentQuestionSerializer, DiagnosticExamSerializer, DiagnosticExamQuestionSerializer
+    AssessmentCreateSerializer, AssessmentQuestionSerializer, DiagnosticExamSerializer, \
+    DiagnosticExamQuestionSerializer, AssessmentSerializer
 from apps.common.mixins import PrivateSONRendererMixin
 from apps.content.models import Subject
 from apps.content.serializers import SubjectSerializer, TopicSerializer
@@ -527,14 +528,14 @@ class AssessmentView(PrivateSONRendererMixin, GenericViewSet):
 
     def get_serializer_class(self):
         if self.action == "retrieve":
-            return AssessmentQuestionSerializer
+            return AssessmentSerializer
         elif self.action == 'create':
             return AssessmentCreateSerializer
         return AssessmentSubjectsSerializer
 
     def retrieve(self, request, *args, **kwargs):
         assessment = self.get_object()
-        serializer = self.get_serializer(data=assessment.questions, many=True)
+        serializer = self.get_serializer(assessment, many=False)
         serializer.is_valid()
         return Response(serializer.data)
 
