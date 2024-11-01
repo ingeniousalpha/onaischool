@@ -188,6 +188,9 @@ class ExtranceExamDetailSerializer(EntranceExamSerializer):
                                           exam_per_day=exam_per_day,
                                           entrance_exam=obj,
                                           start_datetime=timezone.now())
+        else:
+            uqr.updated_at = timezone.now()
+            uqr.save(update_fields=['updated_at'])
         user.save(update_fields=['current_exam_per_day'])
         self.context['uqr'] = uqr.order_by('-id').first().id
         return ExamPerDayDetailSerializer(obj.exam_per_day.filter(id=day).all(), many=True, context=self.context).data

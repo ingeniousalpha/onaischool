@@ -276,7 +276,7 @@
                                         <div class="col mr-2">
                                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                                 Tasks Solved</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="tasks_solved">0</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="tasks_solved" >{{ tasks_solved }}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -291,7 +291,7 @@
                                         <div class="col mr-2">
                                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                                 Tasks Correct</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="tasks_correct">0</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="tasks_correct">{{ tasks_correct }}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -396,7 +396,7 @@
               pointHoverBorderColor: "rgba(78, 115, 223, 1)",
               pointHitRadius: 10,
               pointBorderWidth: 2,
-              data: {{users_count_list}},
+              data: {{ users_count_list }},
             }],
           },
           options: {
@@ -569,7 +569,7 @@
         var performanceChart = new Chart(performance_chart_ctx, {
             type: 'line',
             data: {
-                labels: [], // Example labels, replace with real data
+                labels: [{% for item in users_tasks_dates_list %}"{{item}}",{% endfor %}], // Example labels, replace with real data
                 datasets: [{
                     label: "Tasks Solved Over Time",
                     lineTension: 0.3,
@@ -583,7 +583,7 @@
                     pointHoverBorderColor: "rgba(78, 115, 223, 1)",
                     pointHitRadius: 10,
                     pointBorderWidth: 2,
-                    data: [], // Example data, replace with real values
+                    data: [{{ user_tasks_list }}], // Example data, replace with real values
                 }],
             },
             options: {

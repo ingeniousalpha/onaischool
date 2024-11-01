@@ -41,6 +41,8 @@ def get_month_str(month_dot_year):
 
 def dashboard_view(request):
     period = request.GET.get('period')  # today/last_week/last_month/last_year
+    student_id = request.GET.get('student_id')
+    print(student_id, 1111)
     group_by_field = 'created_at__date'
     if period == 'today':
         filter_period = timezone.now().date()
@@ -64,6 +66,26 @@ def dashboard_view(request):
     else:
         users_dates = users_total.values(group_by_field).annotate(users_count=Count('id')).order_by(group_by_field)
 
+    users_tasks_dates_list = []
+    user_tasks_list = []
+    tasks_solved = 0
+    tasks_correct = 0
+    if student_id:
+        user_questions = UserQuizQuestion.objects.all()
+        if student_id and student_id != 'all':
+            user_questions = user_questions.filter(user_id=student_id)
+
+        user_resolved_tasks = user_questions.annotate(month_year=MonthYear('created_at')).values(
+            group_by_field).annotate(
+            resolved_task_count=Count('id')).order_by(
+            group_by_field)
+
+        for item in user_resolved_tasks:
+            users_tasks_dates_list.append(item[group_by_field])
+            user_tasks_list.append(item['resolved_task_count'])
+        tasks_solved = user_questions.filter(created_at__gte=filter_period).count()
+        tasks_correct = user_questions.filter(is_correct=True, created_at__gte=filter_period).count()
+
     users_dates_list = []
     users_count_list = []
     for item in users_dates:
@@ -76,7 +98,60 @@ def dashboard_view(request):
         "users_count_total": users_count_total,
         "students_count_total": students_count_total,
         "users_dates_list": users_dates_list,
-        "users_count_list": users_count_list
+        "users_count_list": users_count_list,
+        "user_tasks_list": user_tasks_list,
+        'tasks_solved': tasks_solved,
+        'tasks_correct': tasks_correct,
+        "users_tasks_dates_list": users_tasks_dates_list,
+        "student_id": student_id
+    })
+
+
+def dashboard_view_for_users(request):
+    period = request.GET.get('period')
+    student_uuid = request.GET.get('student_uuid')
+    group_by_field = 'created_at__date'
+    if period == 'today':
+        filter_period = timezone.now().date()
+    elif period == 'last_week':
+        filter_period = timezone.now() - timezone.timedelta(days=7)
+    elif period == 'last_year':
+        group_by_field = 'month_year'
+        filter_period = timezone.now() - timezone.timedelta(days=365)
+    else:
+        period = 'last_month'
+        filter_period = timezone.now() - timezone.timedelta(days=30)
+
+    users_tasks_dates_list = []
+    user_tasks_list = []
+    tasks_solved = 0
+    tasks_correct = 0
+    if User.objects.filter(uuid=student_uuid).exists():
+
+        user = User.objects.filter(uuid=student_uuid).first()
+        if user:
+            user_questions = UserQuizQuestion.objects.all()
+            user_questions = user_questions.filter(user_id=user.id, created_at__gte=filter_period)
+
+            user_resolved_tasks = user_questions.annotate(month_year=MonthYear('created_at')).values(
+                group_by_field).annotate(
+                resolved_task_count=Count('id')).order_by(
+                group_by_field)
+
+            for item in user_resolved_tasks:
+                users_tasks_dates_list.append(item[group_by_field])
+                user_tasks_list.append(item['resolved_task_count'])
+            tasks_solved = user_questions.count()
+            tasks_correct = user_questions.filter(is_correct=True).count()
+
+    return render(request, "user_dashboard.html", {
+        "period": period,
+        'tasks_solved': tasks_solved,
+        'tasks_correct': tasks_correct,
+        "users_tasks_dates_list": users_tasks_dates_list,
+        "user_tasks_list": user_tasks_list,
+        "student_uuid": student_uuid,
+        'percent_correct': (tasks_correct / tasks_solved) * 100 if tasks_solved > 0 else 0
     })
 
 
