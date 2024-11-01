@@ -601,6 +601,8 @@ class AssessmentCheckAnswerView(PrivateSONRendererMixin, APIView):
                     is_correct = False
                 uqq.updated_at = timezone.now()
                 uqq.save(update_fields=['updated_at'])
+                uqq.assessment.updated_at = timezone.now()
+                uqq.assessment.save()
             data.append({
                 'answer_id': answer.id,
                 'user_answer': open_answer,
@@ -612,7 +614,6 @@ class AssessmentCheckAnswerView(PrivateSONRendererMixin, APIView):
                 correct_answer_count += 1
         if answers.count() == correct_answer_count:
             uqq.is_correct = is_correct
-            print('is_correct')
         else:
             uqq.is_correct = False
         uqq.save(update_fields=['is_correct', 'user_answer'])
