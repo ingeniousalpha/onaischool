@@ -536,7 +536,6 @@ class AssessmentView(PrivateSONRendererMixin, GenericViewSet):
     def retrieve(self, request, *args, **kwargs):
         assessment = self.get_object()
         serializer = self.get_serializer(assessment, many=False)
-        serializer.is_valid()
         return Response(serializer.data)
 
     def list(self, request, *args, **kwargs):

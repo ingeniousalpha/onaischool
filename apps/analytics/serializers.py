@@ -353,7 +353,7 @@ class AssessmentQuestionSerializer(AbstractImageSerializer, AbstractTitleSeriali
 
 class AssessmentSerializer(serializers.ModelSerializer):
     passed_duration = serializers.SerializerMethodField()
-    questions = AssessmentQuestionSerializer(source='questions', many=True)
+    questions = AssessmentQuestionSerializer(many=True)
     duration = serializers.SerializerMethodField()
 
     class Meta:

@@ -320,6 +320,7 @@ class UserAssessment(models.Model):
     level = models.IntegerField(default=1)
     questions = models.ManyToManyField(Question)
     start_datetime = models.DateTimeField(_("Время начала"), auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(_("Время последнего изменения"), auto_now=True, db_index=True)
     end_datetime = models.DateTimeField(null=True, blank=True, verbose_name='Время окончания')
     is_finished = models.BooleanField(default=False)
 
