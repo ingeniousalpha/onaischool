@@ -363,15 +363,9 @@ class AssessmentSerializer(serializers.ModelSerializer):
     def get_duration(self, obj):
         duration = 60
         if obj.assessment_type == 'SOR':
-            print(obj.subject.id)
-            print(obj.subject.sor_duration)
             duration = duration * obj.subject.sor_duration
-            print(duration)
         else:
-            print(obj.subject.id)
-            print(obj.subject.soch_duration)
             duration = duration * obj.subject.soch_duration
-            print(duration)
         return duration
 
     def get_passed_duration(self, obj):
