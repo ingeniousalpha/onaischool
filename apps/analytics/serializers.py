@@ -370,8 +370,7 @@ class AssessmentSerializer(serializers.ModelSerializer):
         if obj.updated_at < obj.start_datetime:
             return 0
         passed_duration = obj.updated_at - obj.start_datetime
-        return passed_duration.total_seconds()
-
+        return round(passed_duration.total_seconds(), 2)
 
 class QuizQuestionDetailSerializer(QuizQuestionsSerializer):
     explanation_answer = serializers.SerializerMethodField()

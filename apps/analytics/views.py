@@ -535,6 +535,8 @@ class AssessmentView(PrivateSONRendererMixin, GenericViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         assessment = self.get_object()
+        assessment.updated_at = timezone.now()
+        assessment.save()
         serializer = self.get_serializer(assessment, many=False)
         return Response(serializer.data)
 
