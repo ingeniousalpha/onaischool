@@ -217,6 +217,12 @@ class ExamQuestion(AbstractTitleModel):
         related_name='exam_questions'
     )
     score = models.IntegerField(default=1)
+    type = models.CharField(
+        max_length=255,
+        choices=QuestionType.choices,
+        default=QuestionType.one_choice,
+        verbose_name='Тип вопроса'
+    )
 
     class Meta:
         verbose_name = _("Вопрос (Вступительный тест)")

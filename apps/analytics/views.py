@@ -11,7 +11,7 @@ from apps.analytics.exceptions import AnswerDoesntExists, ExamNotFound, Question
 from apps.analytics.models import Quiz, Question, AnswerOption, EntranceExam, ExamAnswerOption, QuestionType, \
     DiagnosticExam, DiagnosticExamAnswerOption
 from apps.analytics.serializers import QuizSerializer, QuizQuestionsSerializer, QuizQuestionDetailSerializer, \
-    CheckAnswerSerializer, EntranceExamSerializer, ExtranceExamDetailSerializer, EntranceCheckAnswerSerializer, \
+    CheckAnswerSerializer, EntranceExamSerializer, ExtranceExamDetailSerializer, \
     FinishExamSerializer, QuestionSerializerWithHints, QuestionSerializerWithAnswer, AssessmentSubjectsSerializer, \
     AssessmentCreateSerializer, AssessmentQuestionSerializer, DiagnosticExamSerializer, \
     DiagnosticExamQuestionSerializer, AssessmentSerializer
@@ -361,23 +361,24 @@ class DiagnosticCheckAnswerView(PrivateSONRendererMixin, APIView):
 
 
 class EntranceExamCheckAnswerView(PrivateSONRendererMixin, APIView):
-    serializer_class = EntranceCheckAnswerSerializer
+    serializer_class = CheckAnswerSerializer
 
     def post(self, request, *args, **kwargs):
         user = request.user
-        serializer = EntranceCheckAnswerSerializer(data=request.data)
+        serializer = CheckAnswerSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer_data = serializer.validated_data
 
         options = serializer_data.get('options', [])
         question_id = serializer_data.get('question_id')
-
-        if not options:
-            return Response({'error': 'No options provided'}, status=400)
+        open_answer = serializer_data.get('answer', None)
 
         answers = ExamAnswerOption.objects.filter(
-            id__in=options,
-            exam_question_id=question_id
+            Q(id__in=options,
+              exam_question_id=question_id)
+            |
+            Q(exam_question_id=question_id,
+              exam_question__type=QuestionType.open_answer)
         )
         if not answers.exists():
             raise AnswerDoesntExists
@@ -392,18 +393,32 @@ class EntranceExamCheckAnswerView(PrivateSONRendererMixin, APIView):
         if uqq:
             uqq.answers.clear()
         for answer in answers:
-            uqq.answers.add(answer.id)
-            if not answer.is_correct:
-                is_correct = False
-            uqq.updated_at = timezone.now()
-            uqq.save(update_fields=['updated_at'])
+            is_correct = True
+            if answer.exam_question.type == QuestionType.open_answer:
+                uqq.user_answer = open_answer
+                if not open_answer:
+                    is_correct = False
+                elif answer.text.ru.lower() == open_answer.lower():
+                    print(11111)
+                    uqq.answers.add(answer.id)
+                    uqq.is_correct = True
+                else:
+                    print('faslse false')
+                    is_correct = False
+            else:
+                uqq.answers.add(answer.id)
+                if not answer.is_correct:
+                    is_correct = False
+                uqq.updated_at = timezone.now()
+                uqq.save(update_fields=['updated_at'])
             data.append({
                 'answer_id': answer.id,
-                'is_correct': answer.is_correct,
+                'user_answer': open_answer,
+                'is_correct': is_correct,
                 'life_count': 4
             })
         uqq.is_correct = is_correct
-        uqq.save(update_fields=['is_correct'])
+        uqq.save(update_fields=['is_correct', 'user_answer'])
         return Response(data)
 
 

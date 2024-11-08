@@ -46,9 +46,11 @@ class ExamQuestionSerializer(AbstractTitleSerializer):
 
     class Meta:
         model = ExamQuestion
-        fields = ['id', 'title', 'options']
+        fields = ['id', 'title', 'type', 'options']
 
     def get_options(self, obj):
+        if obj.type == QuestionType.open_answer:
+            return []
         return ExamQuestionOptionSerializer(obj.exam_answer_options, many=True, context=self.context).data
 
 
@@ -374,6 +376,7 @@ class AssessmentSerializer(serializers.ModelSerializer):
         passed_duration = obj.updated_at - obj.start_datetime
         return round(passed_duration.total_seconds(), 2)
 
+
 class QuizQuestionDetailSerializer(QuizQuestionsSerializer):
     explanation_answer = serializers.SerializerMethodField()
     explanation_answer_image = serializers.SerializerMethodField()
@@ -440,11 +443,6 @@ class CheckAnswerSerializer(serializers.Serializer):
     question_id = serializers.IntegerField()
     answer = serializers.CharField(required=False)
     options = serializers.ListSerializer(child=serializers.IntegerField(required=False), required=False)
-
-
-class EntranceCheckAnswerSerializer(serializers.Serializer):
-    question_id = serializers.IntegerField()
-    options = serializers.ListSerializer(child=serializers.IntegerField(required=True))
 
 
 class FinishExamSerializer(serializers.Serializer):

@@ -128,16 +128,28 @@ class ExamSubjectForm(forms.ModelForm):
             ru_correct_answers = regex_options(str(row['ru_correct_answers']))
             ru_answers = regex_options(str(row['ru_answers'])) if row['ru_answers'] == row['ru_answers'] else None
             kk_answers = regex_options(str(row['kk_answers'])) if row['kk_answers'] == row['kk_answers'] else None
+            open_answer = row.get('open_answer', None)
 
             question = ExamQuestion.objects.create(
                 title={"kk": row['kk_task'], "ru": row['ru_task']},
                 assessment_subject=exam_subject,
                 score=row.get('score', 1)
             )
+            if open_answer is not None:
+                answers = open_answer.split('\n')
+                question.type = QuestionType.open_answer
+                for answer in answers:
+                    wol_answer = remove_latex_bracket(answer)
+                    ExamAnswerOption.objects.create(
+                        text={"kk": wol_answer, "ru": wol_answer},
+                        is_correct=True,
+                        question=question
+                    )
+                question.save(update_fields=['type'])
 
             if not (kk_answers and ru_answers) and (kk_correct_answers and ru_correct_answers):
                 for kk_answer, ru_answer in zip(kk_correct_answers, ru_correct_answers):
-                    AnswerOption.objects.create(
+                    ExamAnswerOption.objects.create(
                         text={"kk": remove_latex_bracket(kk_answer), "ru": remove_latex_bracket(ru_answer)},
                         is_correct=True,
                         exam_question=question

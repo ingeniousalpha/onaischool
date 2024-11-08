@@ -259,6 +259,7 @@ class UserExamQuestion(TimestampModel):
         blank=True,
         related_name='user_exam_questions'
     )
+    user_answer = models.CharField(max_length=255, null=True, blank=True)
     is_correct = models.BooleanField(null=True, blank=True)
 
     class Meta:
