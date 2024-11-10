@@ -41,17 +41,28 @@ class ExamQuestionOptionSerializer(AbstractImageSerializer):
         return obj.text.translate()
 
 
-class ExamQuestionSerializer(AbstractTitleSerializer, AbstractImageSerializer):
+class ExamQuestionSerializer(AbstractTitleSerializer, AbstractImageSerializer, UserPropertyMixin):
     options = serializers.SerializerMethodField()
+    open_answer = serializers.SerializerMethodField()
 
     class Meta:
         model = ExamQuestion
-        fields = ['id', 'title', 'type', 'image', 'options']
+        fields = ['id', 'title', 'type', 'image', 'options', 'open_answer']
 
     def get_options(self, obj):
         if obj.type == QuestionType.open_answer:
             return []
         return ExamQuestionOptionSerializer(obj.exam_answer_options, many=True, context=self.context).data
+
+    def get_open_answer(self, obj):
+        user = self.user
+        if obj.type == QuestionType.open_answer and obj.user_exam_questions.filter(user=user).exists():
+            uqq = obj.user_exam_questions.filter(user=user).order_by('-id').first()
+            return {
+                "is_correct": uqq.is_correct,
+                "user_answer": uqq.user_answer,
+            }
+        return {}
 
 
 class ExamSubjectDetailSerializer(ExamSubjectSerializer):
