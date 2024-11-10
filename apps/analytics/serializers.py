@@ -41,12 +41,12 @@ class ExamQuestionOptionSerializer(AbstractImageSerializer):
         return obj.text.translate()
 
 
-class ExamQuestionSerializer(AbstractTitleSerializer):
+class ExamQuestionSerializer(AbstractTitleSerializer, AbstractImageSerializer):
     options = serializers.SerializerMethodField()
 
     class Meta:
         model = ExamQuestion
-        fields = ['id', 'title', 'type', 'options']
+        fields = ['id', 'title', 'type', 'image', 'options']
 
     def get_options(self, obj):
         if obj.type == QuestionType.open_answer:
