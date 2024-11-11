@@ -44,10 +44,23 @@ class ExamQuestionOptionSerializer(AbstractImageSerializer):
 class ExamQuestionSerializer(AbstractTitleSerializer, AbstractImageSerializer, UserPropertyMixin):
     options = serializers.SerializerMethodField()
     open_answer = serializers.SerializerMethodField()
+    explanation_answer = serializers.SerializerMethodField()
+    explanation_answer_image = serializers.SerializerMethodField()
+    explanation_correct_answer = serializers.SerializerMethodField()
 
     class Meta:
         model = ExamQuestion
-        fields = ['id', 'title', 'type', 'image', 'options', 'open_answer']
+        fields = [
+            'id',
+            'title',
+            'type',
+            'image',
+            'options',
+            'open_answer',
+            'explanation_answer',
+            'explanation_answer_image',
+            'explanation_correct_answer'
+        ]
 
     def get_options(self, obj):
         if obj.type == QuestionType.open_answer:
@@ -63,6 +76,20 @@ class ExamQuestionSerializer(AbstractTitleSerializer, AbstractImageSerializer, U
                 "user_answer": uqq.user_answer,
             }
         return {}
+
+    def get_explanation_answer(self, obj: Question) -> str:
+        return obj.explanation_answer.translate()
+
+    def get_explanation_answer_image(self, obj):
+        request = self.context.get('request')
+        if obj.explanation_answer_image.translate():
+            return request.build_absolute_uri(obj.explanation_answer_image.translate().url)
+        return ''
+
+    def get_explanation_correct_answer(self, obj):
+        if obj.exam_answer_options.filter(is_correct=True).exists():
+            correct_answer = obj.exam_answer_options.filter(is_correct=True).first()
+            return correct_answer.text.translate()
 
 
 class ExamSubjectDetailSerializer(ExamSubjectSerializer):
@@ -131,7 +158,7 @@ class ExamPerDaySerializer(AbstractTitleSerializer):
         fields = ['id', 'title', 'duration', 'subjects']
 
     def get_duration(self, obj):
-        return obj.duration*60
+        return obj.duration * 60
 
     def get_subjects(self, obj):
         return ExamSubjectSerializer(obj.exam_subjects, many=True, context=self.context).data
@@ -333,7 +360,8 @@ class AssessmentQuestionSerializer(AbstractImageSerializer, AbstractTitleSeriali
 
     def get_final_result(self, obj):
         if self.user.user_assessment_results:
-            user_question = self.user.user_assessment_results.filter(question_id=obj.id, assessment__is_finished=False).first()
+            user_question = self.user.user_assessment_results.filter(question_id=obj.id,
+                                                                     assessment__is_finished=False).first()
             return False if user_question.is_correct is None else user_question.is_correct
         return False
 
@@ -581,7 +609,8 @@ class DiagnosticExamQuestionSerializer(AbstractImageSerializer, AbstractTitleSer
         fields = [
             'id', 'title', 'image', 'open_answer', 'show_report',
             'final_result', 'is_answer_viewed',
-            'type', 'is_selected', 'answers', 'explain_video', 'explanation_answer', 'explanation_answer_image', 'explanation_correct_answer']
+            'type', 'is_selected', 'answers', 'explain_video', 'explanation_answer', 'explanation_answer_image',
+            'explanation_correct_answer']
 
     def get_final_result(self, obj):
         return False

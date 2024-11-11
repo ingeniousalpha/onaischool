@@ -132,6 +132,7 @@ class ExamSubjectForm(forms.ModelForm):
 
             question = ExamQuestion.objects.create(
                 title={"kk": row['kk_task'], "ru": row['ru_task']},
+                explanation_answer={"kk": row['kk_explanation'], "ru": row['ru_explanation']},
                 assessment_subject=exam_subject,
                 score=row.get('score', 1)
             )

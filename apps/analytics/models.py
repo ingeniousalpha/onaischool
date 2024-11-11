@@ -216,6 +216,17 @@ class ExamQuestion(AbstractTitleModel):
         blank=True,
         related_name='exam_questions'
     )
+    explanation_answer = LocalizedTextField(
+        verbose_name=_("Объяснение ответа"),
+        null=True,
+        blank=True
+    )
+    explanation_answer_image = LocalizedFileField(
+        upload_to="images/analytics/",
+        verbose_name="Объяснение ответа(картинка)",
+        null=True,
+        blank=True,
+    )
     score = models.IntegerField(default=1)
     type = models.CharField(
         max_length=255,
