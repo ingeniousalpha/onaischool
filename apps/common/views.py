@@ -1,17 +1,17 @@
-from django.db.models import Sum, Count, Func
+from django.db.models import Sum, Count, Func, Q, Prefetch
 from django.shortcuts import render
 from rest_framework.generics import ListAPIView, GenericAPIView
 from django.conf import settings
 from django.utils import timezone
 
 from apps import Roles
-from apps.analytics.models import Quiz
+from apps.analytics.models import Quiz, EntranceExamSubject, EntranceExamPerDay
 from apps.common.mixins import PublicJSONRendererMixin
 from rest_framework.response import Response
 
 from apps.content.models import School
 from apps.location.models import City
-from apps.users.models import User, UserQuizReport, UserQuizQuestion
+from apps.users.models import User, UserQuizReport, UserQuizQuestion, UserExamResult
 
 MONTHS_NAMES = {
     "1": "Январь",
@@ -42,7 +42,6 @@ def get_month_str(month_dot_year):
 def dashboard_view(request):
     period = request.GET.get('period')  # today/last_week/last_month/last_year
     student_id = request.GET.get('student_id')
-    print(student_id, 1111)
     group_by_field = 'created_at__date'
     if period == 'today':
         filter_period = timezone.now().date()
@@ -92,6 +91,14 @@ def dashboard_view(request):
         users_dates_list.append(get_month_str(item[group_by_field]) if period == "last_year" else item[group_by_field])
         users_count_list.append(item['users_count'])
 
+    exam_per_days = EntranceExamPerDay.objects.filter(show_result_on_dashboard=True).prefetch_related(
+        Prefetch(
+            'user_exam_results',
+            queryset=UserExamResult.objects.filter(end_datetime__isnull=False).order_by('-correct_score'),
+            to_attr='exam_results'
+        )
+    )
+
     return render(request, "dashboard.html", {
         "period": period,
         "cities": cities,
@@ -103,7 +110,8 @@ def dashboard_view(request):
         'tasks_solved': tasks_solved,
         'tasks_correct': tasks_correct,
         "users_tasks_dates_list": users_tasks_dates_list,
-        "student_id": student_id
+        "student_id": student_id,
+        "exam_per_days": exam_per_days
     })
 
 

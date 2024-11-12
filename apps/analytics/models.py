@@ -176,6 +176,10 @@ class EntranceExamPerDay(AbstractTitleModel):
         on_delete=models.CASCADE,
         related_name='exam_per_day'
     )
+    show_result_on_dashboard = models.BooleanField(
+        verbose_name="Показать в дачбоарде",
+        default=False
+    )
 
     def __str__(self):
         if self.exam:

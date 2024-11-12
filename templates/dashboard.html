@@ -315,6 +315,36 @@
                     </div>
                 </div>
 
+               {% for epd in exam_per_days %}
+                   <h4>{{ epd }}</h4>
+                   <table class="table table-primary mb-4">
+                       <thead>
+                       <tr>
+                           <th colspan="4" class="table-secondary text-center">{{ epd.name }}</th>
+                       </tr>
+                       <tr>
+                           <th scope="col">#</th>
+                           <th scope="col">Пользователь</th>
+                           <th scope="col">Баллы</th>
+                           <th scope="col">Дата завершения</th>
+                       </tr>
+                       </thead>
+                       <tbody>
+                       {% for result in epd.exam_results %}
+                           <tr>
+                               <td>{{ forloop.counter }}</td>
+                               <td>{{ result.user }}</td>
+                               <td>{{ result.correct_score }}</td>
+                               <td>{{ result.end_datetime }}</td>
+                           </tr>
+                       {% empty %}
+                           <tr>
+                               <td colspan="4" class="text-center">Нет доступных результатов для этого экзамена.</td>
+                           </tr>
+                       {% endfor %}
+                       </tbody>
+                   </table>
+               {% endfor %}
 
                 </div>
                 <!-- /.container-fluid -->

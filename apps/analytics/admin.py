@@ -44,7 +44,7 @@ class ExamSubjectInline(admin.StackedInline):
 
 class ExamPerDayInline(admin.StackedInline):
     model = EntranceExamPerDay
-    fields = ('id', 'title', 'duration', 'passing_score')
+    fields = ('id', 'title', 'duration', 'passing_score', 'show_result_on_dashboard')
     extra = 0
 
 
