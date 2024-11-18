@@ -1,7 +1,7 @@
 from django.db.models import Q
 from django.shortcuts import render
 from rest_framework import viewsets, status
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
@@ -14,12 +14,12 @@ from apps.analytics.serializers import QuizSerializer, QuizQuestionsSerializer, 
     CheckAnswerSerializer, EntranceExamSerializer, ExtranceExamDetailSerializer, \
     FinishExamSerializer, QuestionSerializerWithHints, QuestionSerializerWithAnswer, AssessmentSubjectsSerializer, \
     AssessmentCreateSerializer, AssessmentQuestionSerializer, DiagnosticExamSerializer, \
-    DiagnosticExamQuestionSerializer, AssessmentSerializer
+    DiagnosticExamQuestionSerializer, AssessmentSerializer, UserExamResultSerializer
 from apps.common.mixins import PrivateSONRendererMixin
 from apps.content.models import Subject
 from apps.content.serializers import SubjectSerializer, TopicSerializer
 from apps.users.models import UserQuizQuestion, UserExamQuestion, UserQuizReport, UserAssessmentResult, UserAssessment, \
-    UserDiagnosticsResult, UserDiagnosticExamReport, MyTopic
+    UserDiagnosticsResult, UserDiagnosticExamReport, MyTopic, UserExamResult
 
 
 class EntranceExamView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
@@ -34,6 +34,17 @@ class EntranceExamView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
         if self.action == "retrieve":
             return ExtranceExamDetailSerializer
         return EntranceExamSerializer
+
+
+class EntranceExamShowAnswer(PrivateSONRendererMixin, ReadOnlyModelViewSet):
+    queryset = UserExamResult.objects.all()
+    lookup_field = 'uuid'
+    serializer_class = UserExamResultSerializer
+
+    def user_exam_results(self, request, *args, **kwargs):
+        obj = self.get_object()
+        serializer = self.get_serializer(obj, many=False)
+        return Response(serializer.data)
 
 
 class DiagnosticExamQuestionView(PrivateSONRendererMixin, ReadOnlyModelViewSet):
@@ -360,11 +371,14 @@ class DiagnosticCheckAnswerView(PrivateSONRendererMixin, APIView):
         return Response(data)
 
 
-class EntranceExamCheckAnswerView(PrivateSONRendererMixin, APIView):
+class EntranceExamCheckAnswerView(PrivateSONRendererMixin, CreateAPIView):
     serializer_class = CheckAnswerSerializer
+    queryset = UserExamResult.objects.all()
+    lookup_field = 'uuid'
 
     def post(self, request, *args, **kwargs):
         user = request.user
+        uer = self.get_object()
         serializer = CheckAnswerSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer_data = serializer.validated_data
@@ -386,6 +400,7 @@ class EntranceExamCheckAnswerView(PrivateSONRendererMixin, APIView):
         is_correct = True
         uqq = UserExamQuestion.objects.filter(user=user,
                                               exam_question=question_id,
+                                              exam_result_id=uer.id,
                                               exam_result__end_datetime__isnull=True).order_by('-id').first()
         if uqq.exam_result:
             uqq.exam_result.updated_at = timezone.now()
@@ -399,11 +414,9 @@ class EntranceExamCheckAnswerView(PrivateSONRendererMixin, APIView):
                 if not open_answer:
                     is_correct = False
                 elif answer.text.ru.lower() == open_answer.lower():
-                    print(11111)
                     uqq.answers.add(answer.id)
                     uqq.is_correct = True
                 else:
-                    print('faslse false')
                     is_correct = False
             else:
                 uqq.answers.add(answer.id)
@@ -422,16 +435,17 @@ class EntranceExamCheckAnswerView(PrivateSONRendererMixin, APIView):
         return Response(data)
 
 
-class FinishEntranceExamView(PrivateSONRendererMixin, APIView):
+class FinishEntranceExamView(PrivateSONRendererMixin, CreateAPIView):
     serializer_class = FinishExamSerializer
+    queryset = UserExamResult.objects.all()
+    lookup_field = 'uuid'
 
     def post(self, request, *args, **kwargs):
         user = request.user
-        serializer_data = FinishExamSerializer(request.data).data
-        entrance_exam = EntranceExam.objects.filter(id=serializer_data['exam_id']).first()
+        user_exam_result = self.get_object()
+        entrance_exam = user_exam_result.entrance_exam
         if not entrance_exam:
             raise ExamNotFound
-        user_exam_result = user.user_exam_results.filter(entrance_exam_id=entrance_exam.id).first()
         if not user_exam_result.end_datetime:
             user_exam_result.end_datetime = timezone.now()
         correct_question_count = 0
@@ -440,7 +454,7 @@ class FinishEntranceExamView(PrivateSONRendererMixin, APIView):
         for user_exam_question in user_exam_questions:
             correct_question_count += user_exam_question.exam_question.score
         passing_score = 0
-        exam_per_day = entrance_exam.exam_per_day.filter(id=serializer_data['day']).first()
+        exam_per_day = user_exam_result.exam_per_day
         if exam_per_day:
             passing_score = exam_per_day.passing_score
         user_exam_result.correct_score = correct_question_count
@@ -448,6 +462,7 @@ class FinishEntranceExamView(PrivateSONRendererMixin, APIView):
         duration = user_exam_result.end_datetime - user_exam_result.start_datetime
         duration_seconds = duration.total_seconds()
         resp_data = {
+            'uuid': user_exam_result.uuid,
             'score': correct_question_count,
             'duration': duration_seconds,
             'passing_score': passing_score,

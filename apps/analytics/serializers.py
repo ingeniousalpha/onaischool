@@ -1,3 +1,4 @@
+import uuid
 from collections import defaultdict
 from itertools import groupby
 
@@ -175,6 +176,18 @@ class ExamPerDayDetailSerializer(ExamPerDaySerializer):
         return ExamSubjectDetailSerializer(obj.exam_subjects, many=True, context=self.context).data
 
 
+class UserExamResultSerializer(serializers.ModelSerializer):
+    exam_per_day = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserExamResult
+        fields = ['uuid', 'correct_score', 'exam_per_day']
+
+    def get_exam_per_day(self, obj):
+        self.context['uqr'] = obj
+        return ExamPerDayDetailSerializer(obj.exam_per_day, many=False, context=self.context).data
+
+
 class EntranceExamSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
     exam_subjects = serializers.SerializerMethodField()
@@ -195,10 +208,21 @@ class EntranceExamSerializer(serializers.ModelSerializer):
 class ExtranceExamDetailSerializer(EntranceExamSerializer):
     next_subjects = serializers.SerializerMethodField()
     passed_duration = serializers.SerializerMethodField()
+    uuid = serializers.SerializerMethodField()
 
     class Meta(EntranceExamSerializer.Meta):
         model = EntranceExam
-        fields = EntranceExamSerializer.Meta.fields + ['next_subjects', 'passed_duration']
+        fields = EntranceExamSerializer.Meta.fields + ['next_subjects', 'passed_duration', 'uuid']
+
+    def get_uuid(self, obj):
+        request = self.context.get('request')
+        user = request.user
+        query_params = request.query_params
+        day = query_params.get('day')
+        exam_per_day = EntranceExamPerDay.objects.filter(id=day).first()
+        uer = obj.user_exam_results.filter(user=user, exam_per_day=exam_per_day, end_datetime__isnull=True)
+        if uer.exists():
+            return uer.order_by('-id').first().uuid
 
     def get_passed_duration(self, obj):
         request = self.context.get('request')
@@ -206,8 +230,8 @@ class ExtranceExamDetailSerializer(EntranceExamSerializer):
         query_params = request.query_params
         day = query_params.get('day')
         exam_per_day = EntranceExamPerDay.objects.filter(id=day).first()
-        if obj.user_exam_results.filter(user=user, exam_per_day=exam_per_day).exists():
-            ueq = obj.user_exam_results.filter(user=user, exam_per_day=exam_per_day).first()
+        if obj.user_exam_results.filter(user=user, exam_per_day=exam_per_day, end_datetime__isnull=True).exists():
+            ueq = obj.user_exam_results.filter(user=user, exam_per_day=exam_per_day, end_datetime__isnull=True).order_by('-id').first()
             if ueq.updated_at < ueq.start_datetime:
                 return 0
             passed_duration = ueq.updated_at - ueq.start_datetime

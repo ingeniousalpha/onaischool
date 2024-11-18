@@ -267,6 +267,7 @@ class UserExamQuestion(TimestampModel):
 
 
 class UserExamResult(TimestampModel):
+    uuid = models.UUIDField(default=uuid_lib.uuid4, editable=False, null=True, unique=True)
     entrance_exam = models.ForeignKey(
         EntranceExam,
         verbose_name="Выступительный тест",

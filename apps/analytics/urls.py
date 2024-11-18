@@ -3,14 +3,16 @@ from rest_framework.routers import DefaultRouter
 
 from apps.analytics.views import TopicQuizzesView, CheckAnswerView, EntranceExamView, EntranceExamCheckAnswerView, \
     FinishEntranceExamView, QuizView, FinishQuiz, AssessmentView, AssessmentCheckAnswerView, FinishAssessmentView, \
-    DiagnosticExamQuestionView, DiagnosticCheckAnswerView, DiagnosticExamView
+    DiagnosticExamQuestionView, DiagnosticCheckAnswerView, DiagnosticExamView, EntranceExamShowAnswer
 
 urlpatterns = [
-    path('exam-check-answer', EntranceExamCheckAnswerView.as_view()),
-    path('finish-exam', FinishEntranceExamView.as_view()),
+    path('exam-check-answer/<uuid:uuid>', EntranceExamCheckAnswerView.as_view()),
+    path('finish-exam/<uuid:uuid>', FinishEntranceExamView.as_view()),
     path('check-answer', CheckAnswerView.as_view()),
     path('diagnostic-check-answer', DiagnosticCheckAnswerView.as_view()),
     path('assessment-check-answer/<uuid:uuid>', AssessmentCheckAnswerView.as_view()),
+    path('entrance-exams/<uuid:uuid>/', EntranceExamShowAnswer.as_view(actions={'get': 'user_exam_results'}),
+         name='show-entrance-exam'),
     path(
         'finish-assessment/<uuid:uuid>',
         FinishAssessmentView.as_view({'post': 'finish_assessment'}),
