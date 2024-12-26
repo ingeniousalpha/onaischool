@@ -143,3 +143,19 @@ services:
       - onai-portainer_data:/data
       - /var/run/docker.sock:/var/run/docker.sock
     restart: always
+
+  questionnaire-bot:
+    container_name: questionnaire-bot
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile.bot
+    command: python apps/questionnaire_bot/launcher.py
+    volumes:
+      - .:/onaischool
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - onai-db
+    networks:
+      - onai-net
