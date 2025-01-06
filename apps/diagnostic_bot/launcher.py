@@ -314,7 +314,7 @@ async def callback_finish_handler(callback_query: CallbackQuery):
 def get_contact_keyboard(phone_button_text):
     builder = ReplyKeyboardBuilder()
     builder.button(text=phone_button_text, request_contact=True)
-    return builder.as_markup(resize_keyboard=True)
+    return builder.as_markup()
 
 
 @dp.message(F.contact)
