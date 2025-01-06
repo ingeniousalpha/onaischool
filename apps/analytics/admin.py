@@ -3,11 +3,13 @@ from django.core.exceptions import ValidationError
 from django import forms
 import pandas as pd
 import re
+
+from django_filters.utils import verbose_field_name
 from localized_fields.admin import LocalizedFieldsAdminMixin
 
 from apps.analytics.models import Question, Quiz, AnswerOption, EntranceExam, EntranceExamSubject, ExamQuestion, \
     ExamAnswerOption, EntranceExamPerDay, DiagnosticExam, DiagnosticExamQuestion, DiagnosticExamAnswerOption, \
-    QuestionType
+    QuestionType, DiagnosticBotSession, DiagnosticBotUserAnswer
 from apps.analytics.utils import regex_options, remove_latex_bracket
 from apps.content.models import Topic
 
@@ -288,3 +290,58 @@ class DiagnosticExamQuestionAdmin(LocalizedFieldsAdminMixin, admin.ModelAdmin):
     search_fields = ('title',)
     list_filter = ('score',)
     inlines = [DiagnosticExamAnswerOptionInline]
+
+
+class DiagnosticBotUserAnswerForm(forms.ModelForm):
+    question = forms.CharField(required=False)
+    user_answer = forms.CharField(required=False)
+    is_correct = forms.CharField(required=False)
+
+
+class DiagnosticBotUserAnswerInline(admin.StackedInline):
+    model = DiagnosticBotUserAnswer
+    extra = 0
+    fields = ('question_text', 'user_answer_text', 'user_answer_status')
+    readonly_fields = ('question_text', 'user_answer_text', 'user_answer_status')
+
+    def question_text(self, obj):
+        return obj.question.title.ru
+
+    def user_answer_text(self, obj):
+        return obj.answer.text.ru
+
+    def user_answer_status(self, obj):
+        return "✅" if obj.answer.is_correct else "❌"
+
+    question_text.short_description = 'Вопрос'
+    user_answer_text.short_description = 'Ответ пользователя'
+    user_answer_status.short_description = 'Статус ответа'
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(DiagnosticBotSession)
+class DiagnosticBotSessionAdmin(admin.ModelAdmin):
+    list_display = ('user_id', 'phone_number')
+    search_fields = ('user_id', 'phone_number')
+    readonly_fields = ('user_id', 'message_id', 'phone_number')
+    inlines = [DiagnosticBotUserAnswerInline]
+
+    def get_queryset(self, request):
+        return DiagnosticBotSession.objects.filter(phone_number__isnull=False).order_by('-id')
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
