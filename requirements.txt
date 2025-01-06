@@ -72,3 +72,4 @@ openpyxl==3.1.5
 python-telegram-bot==12.6
 asyncpg
 aiogram
+sqlalchemy>=2.0

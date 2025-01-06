@@ -320,3 +320,41 @@ class DiagnosticExamAnswerOption(AbstractOption):
         related_name='diagnostic_exam_answer_options'
     )
 
+
+class DiagnosticBotSession(models.Model):
+    user_id = models.BigIntegerField(verbose_name='ID  пользователя')
+    message_id = models.IntegerField(verbose_name='ID  сообщения')
+    language = models.CharField(max_length=3, default='ru', verbose_name='Язык')
+    phone_number = models.CharField(max_length=20, null=True, blank=True, verbose_name='Номер телефона')
+
+    class Meta:
+        verbose_name = _("Диагностика пользователя")
+        verbose_name_plural = _("Диагностика пользователей")
+
+    def __str__(self):
+        return ""
+
+
+class DiagnosticBotUserAnswer(models.Model):
+    session = models.ForeignKey(
+        DiagnosticBotSession,
+        on_delete=models.CASCADE,
+        verbose_name='Сессия'
+    )
+    question = models.ForeignKey(
+        DiagnosticExamQuestion,
+        on_delete=models.CASCADE,
+        verbose_name='Вопрос'
+    )
+    answer = models.ForeignKey(
+        DiagnosticExamAnswerOption,
+        on_delete=models.CASCADE,
+        verbose_name='Ответ пользователя'
+    )
+
+    class Meta:
+        verbose_name = _("Ответ пользователя")
+        verbose_name_plural = _("Ответы пользователя")
+
+    def __str__(self):
+        return ""
