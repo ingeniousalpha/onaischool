@@ -85,8 +85,8 @@ async def get_exam_questions():
         for exam_question in exam_questions:
             exam_question_data = {
                 "id": exam_question[0],
-                "text_ru": exam_question[1],
-                "text_kk": exam_question[2],
+                "text_ru": exam_question[1].replace('<', '&lt;'),
+                "text_kk": exam_question[2].replace('<', '&lt;'),
                 "answers": []
             }
             question_answers = session.execute(sql.text(f"""
@@ -99,8 +99,8 @@ async def get_exam_questions():
                 exam_question_data["answers"].append(
                     {
                         "id": question_answer[0],
-                        "text_ru": question_answer[1],
-                        "text_kk": question_answer[2],
+                        "text_ru": question_answer[1].replace('<', '&lt;'),
+                        "text_kk": question_answer[2].replace('<', '&lt;'),
                         "is_correct": question_answer[3]
                     }
                 )
