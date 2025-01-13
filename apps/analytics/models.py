@@ -326,6 +326,7 @@ class DiagnosticBotSession(models.Model):
     message_id = models.IntegerField(verbose_name='ID  сообщения')
     language = models.CharField(max_length=3, default='ru', verbose_name='Язык')
     phone_number = models.CharField(max_length=20, null=True, blank=True, verbose_name='Номер телефона')
+    created_at = models.DateTimeField(_("Время создания"), auto_now_add=True, db_index=True)
 
     class Meta:
         verbose_name = _("Диагностика пользователя")

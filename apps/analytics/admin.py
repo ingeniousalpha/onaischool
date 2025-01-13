@@ -303,11 +303,16 @@ class DiagnosticBotUserAnswerInline(admin.StackedInline):
     extra = 0
     fields = ('question_text', 'user_answer_text', 'user_answer_status')
     readonly_fields = ('question_text', 'user_answer_text', 'user_answer_status')
+    ordering = ('id',)
 
     def question_text(self, obj):
+        if obj.session.language == 'kk':
+            return obj.question.title.kk
         return obj.question.title.ru
 
     def user_answer_text(self, obj):
+        if obj.session.language == 'kk':
+            return obj.answer.text.kk
         return obj.answer.text.ru
 
     def user_answer_status(self, obj):
@@ -329,9 +334,11 @@ class DiagnosticBotUserAnswerInline(admin.StackedInline):
 
 @admin.register(DiagnosticBotSession)
 class DiagnosticBotSessionAdmin(admin.ModelAdmin):
-    list_display = ('user_id', 'phone_number')
+    list_display = ('user_id', 'phone_number', 'language', 'created_at')
     search_fields = ('user_id', 'phone_number')
-    readonly_fields = ('user_id', 'message_id', 'phone_number')
+    date_hierarchy = 'created_at'
+    fields = ('message_id', 'user_id', 'phone_number', 'language', 'created_at')
+    readonly_fields = ('message_id', 'user_id', 'phone_number', 'language', 'created_at')
     inlines = [DiagnosticBotUserAnswerInline]
 
     def get_queryset(self, request):
@@ -343,5 +350,5 @@ class DiagnosticBotSessionAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
-    def has_delete_permission(self, request, obj=None):
-        return False
+    # def has_delete_permission(self, request, obj=None):
+    #     return False

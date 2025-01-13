@@ -146,8 +146,8 @@ async def callback_language_handler(callback_query: CallbackQuery):
             """))
         else:
             session.execute(sql.text(f"""
-                INSERT INTO analytics_diagnosticbotsession (user_id, message_id, language, phone_number)
-                VALUES ({callback_query.from_user.id}, {callback_query.message.message_id}, '{language}', NULL)
+                INSERT INTO analytics_diagnosticbotsession (user_id, message_id, language, phone_number, created_at)
+                VALUES ({callback_query.from_user.id}, {callback_query.message.message_id}, '{language}', NULL, NOW())
             """))
         session.commit()
     await callback_query.message.edit_text(text=welcome_text, reply_markup=build_initial_buttons(language))
