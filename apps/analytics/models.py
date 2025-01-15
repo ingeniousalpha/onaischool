@@ -267,7 +267,12 @@ class DiagnosticExam(AbstractTitleModel):
         verbose_name_plural = _("Диагностический тесты")
 
 
-class DiagnosticExamQuestion(AbstractTitleModel):
+class DiagnosticExamQuestion(models.Model):
+    title = LocalizedTextField(
+        verbose_name=_("Заголовок"),
+        null=True,
+        blank=True
+    )
     topic = models.ForeignKey(
         Topic,
         verbose_name="Тема",
