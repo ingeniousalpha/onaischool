@@ -27,7 +27,11 @@ class TopicSerializer(AbstractNameSerializer, AbstractImageSerializer, UserPrope
         fields = ['id', 'name', 'video_link', 'image', 'is_locked', 'is_favorite']
 
     def get_is_locked(self, obj):
-        return not self.user.enabled_topics.filter(id=obj.id).exists()
+        if self.user.enabled_topics.filter(id=obj.id).exists():
+            return False
+        elif self.user.parent is not None and not self.user.parent.enabled_topics.filter(id=obj.id).exists():
+            return False
+        return True
 
     def get_video_link(self, obj):
         return obj.video_link.translate()
@@ -131,7 +135,11 @@ class CourseSerializer(AbstractNameSerializer, UserPropertyMixin):
         fields = ['id', 'name', 'grade', 'quarters', 'is_locked']
 
     def get_is_locked(self, obj):
-        return not self.user.enabled_courses.filter(id=obj.id).exists()
+        if self.user.enabled_courses.filter(id=obj.id).exists():
+            return False
+        elif self.user.parent is not None and not self.user.parent.enabled_courses.filter(id=obj.id).exists():
+            return False
+        return True
 
     def get_quarters(self, obj):
         assessment_view = self.context.get('assessment_view', False)
@@ -181,7 +189,11 @@ class CourseListSerializer(AbstractNameSerializer, UserPropertyMixin):
         fields = ['id', 'name', 'grade', 'is_locked']
 
     def get_is_locked(self, obj):
-        return not self.user.enabled_courses.filter(id=obj.id).exists()
+        if self.user.enabled_courses.filter(id=obj.id).exists():
+            return False
+        elif self.user.parent is not None and not self.user.parent.enabled_courses.filter(id=obj.id).exists():
+            return False
+        return True
 
 
 class SubjectSerializer(AbstractNameSerializer):
