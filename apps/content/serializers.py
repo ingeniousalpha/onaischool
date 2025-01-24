@@ -29,7 +29,7 @@ class TopicSerializer(AbstractNameSerializer, AbstractImageSerializer, UserPrope
     def get_is_locked(self, obj):
         if self.user.enabled_topics.filter(id=obj.id).exists():
             return False
-        elif self.user.parent is not None and not self.user.parent.enabled_topics.filter(id=obj.id).exists():
+        elif self.user.parent is not None and self.user.parent.enabled_topics.filter(id=obj.id).exists():
             return False
         return True
 
@@ -137,7 +137,7 @@ class CourseSerializer(AbstractNameSerializer, UserPropertyMixin):
     def get_is_locked(self, obj):
         if self.user.enabled_courses.filter(id=obj.id).exists():
             return False
-        elif self.user.parent is not None and not self.user.parent.enabled_courses.filter(id=obj.id).exists():
+        elif self.user.parent is not None and self.user.parent.enabled_courses.filter(id=obj.id).exists():
             return False
         return True
 
@@ -191,7 +191,7 @@ class CourseListSerializer(AbstractNameSerializer, UserPropertyMixin):
     def get_is_locked(self, obj):
         if self.user.enabled_courses.filter(id=obj.id).exists():
             return False
-        elif self.user.parent is not None and not self.user.parent.enabled_courses.filter(id=obj.id).exists():
+        elif self.user.parent is not None and self.user.parent.enabled_courses.filter(id=obj.id).exists():
             return False
         return True
 
