@@ -167,7 +167,7 @@ class CourseDetailSerializer(CourseSerializer):
         fields = CourseSerializer.Meta.fields + ['subject_info']
 
     def get_subject_info(self, obj):
-        return SubjectForMyCourseSerializer(obj.subject, many=False).data
+        return SubjectForMyCourseSerializer(obj.subject, many=False, context=self.context).data
 
 
 class CourseSerializerWithoutChapters(AbstractNameSerializer):
