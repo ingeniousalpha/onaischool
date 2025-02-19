@@ -45,10 +45,10 @@ urlpatterns = [
 ]
 
 router = DefaultRouter()
-router.register('quiz/', TopicQuizzesView, basename='topic-quizzes-view')
-router.register('assessment/', AssessmentView, basename='assessment-view')
-router.register('entrance-exams/', EntranceExamView, basename='entrance-exam-view')
-router.register('diagnostic-exams/', DiagnosticExamQuestionView, basename='diagnostic-exam-view')
+router.register('quiz', TopicQuizzesView, basename='topic-quizzes-view')
+router.register('assessment', AssessmentView, basename='assessment-view')
+router.register('entrance-exams', EntranceExamView, basename='entrance-exam-view')
+router.register('diagnostic-exams', DiagnosticExamQuestionView, basename='diagnostic-exam-view')
 
 
 urlpatterns += router.urls
