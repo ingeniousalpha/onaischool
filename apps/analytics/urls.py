@@ -9,6 +9,7 @@ urlpatterns = [
     path('exam-check-answer/<uuid:uuid>/', EntranceExamCheckAnswerView.as_view()),
     path('finish-exam/<uuid:uuid>/', FinishEntranceExamView.as_view()),
     path('check-answer/', CheckAnswerView.as_view()),
+    path('check-answer', CheckAnswerView.as_view()),
     path('diagnostic-check-answe/r', DiagnosticCheckAnswerView.as_view()),
     path('assessment-check-answer/<uuid:uuid>/', AssessmentCheckAnswerView.as_view()),
     path('entrance-exams/<uuid:uuid>/', EntranceExamShowAnswer.as_view(actions={'get': 'user_exam_results'}),
