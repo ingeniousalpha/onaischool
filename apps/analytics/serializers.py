@@ -351,8 +351,8 @@ class QuizQuestionsSerializer(AbstractTitleSerializer, AbstractImageSerializer, 
 
     def get_show_report(self, obj):
         uqq = obj.user_quiz_questions.filter(user=self.user).first()
-        user_questions = UserQuizQuestion.objects.filter(user=self.user, quiz=uqq.quiz, report__finished=False)
-        if user_questions.count() == user_questions.filter(is_correct__isnull=False).count():
+        user_questions = UserQuizQuestion.objects.filter(user=self.user, quiz=uqq.quiz, report__finished=False, report_id=uqq.report_id)
+        if user_questions.count() >= user_questions.filter(is_correct__isnull=False).count():
             return True
         return False
 
