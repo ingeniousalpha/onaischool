@@ -401,7 +401,7 @@ class AssessmentQuestionSerializer(AbstractImageSerializer, AbstractTitleSeriali
 
     def get_show_report(self, obj):
         user_questions = UserAssessmentResult.objects.filter(user=self.user, assessment__is_finished=False)
-        if user_questions.count() == user_questions.filter(is_correct__isnull=False).count():
+        if user_questions.count() >= user_questions.filter(is_correct__isnull=False).count():
             return True
         return False
 
@@ -664,7 +664,7 @@ class DiagnosticExamQuestionSerializer(AbstractImageSerializer, AbstractTitleSer
             user_questions = UserDiagnosticsResult.objects.filter(user=self.user,
                                                                   user_diagnostic_report=diagnostic_report,
                                                                   user_diagnostic_report__is_finished=False)
-            if user_questions.count() == user_questions.filter(is_correct__isnull=False).count():
+            if user_questions.count() >= user_questions.filter(is_correct__isnull=False).count():
                 return True
         return False
 
